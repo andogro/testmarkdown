@@ -1,6 +1,7 @@
 # POA ballot stats
 
 ![logo](poa-logo.png)
+
 POA ballot stats is a command line tool used to displays voting statistics for the [POA network](https://poa.network/). 
 
 [Validators](https://github.com/poanetwork/wiki/wiki/Role-of-Validator) on the network engage in active governance, managing their roles and creating on-chain consensus. This is achieved through a balloting process. 

@@ -1,6 +1,6 @@
 # POA Network
 
-[logo](poa-logo.png)
+![logo](poa-logo.png)
 
 ## To Contribute
 1. Fork the repository

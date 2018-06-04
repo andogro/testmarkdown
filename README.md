@@ -19,11 +19,11 @@ The default display includes:
 
 
 ## Dependencies
-Prior to downloading poa-ballot-stats install and activate a fully synchronized node connected to the POA network. See the [POA installation guide](https://github.com/poanetwork/wiki/wiki/POA-Installation)
+Prior to downloading poa-ballot-stats, install and activate a fully synchronized node connected to the POA network. See the [POA installation guide](https://github.com/poanetwork/wiki/wiki/POA-Installation) for instructions.
 
 **Note:** poa-ballot-stats must access the full network logs. Use these flags when running a node `--pruning=archive --no-warp`
-Example:
 
+**Example:**
 ```bash
 $ parity --chain c:\path\to\spec.json --reserved-peers c:\path\to\bootnodes.txt --pruning=archive --no-warp
 ```

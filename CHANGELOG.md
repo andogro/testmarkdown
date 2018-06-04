@@ -35,7 +35,7 @@ All notable changes to the project will be documented in this file.
 - Fixed server filter registration to allow for use with load-balanced servers and compatibility with https://core.poa.network 
 
 
-## 0.1.0 - 2018-05-19
+## [0.1.0] - 2018-05-19
 ### Added
 - Initial implementation
 - GPL3 License

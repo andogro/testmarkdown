@@ -1,9 +1,6 @@
 # Changelog
 All notable changes to the project will be documented in this file.
 
-## [Unreleased]
-
-
 ## [0.3.0] - 2018-05-29
 ### Added
 - --b flag to specify a specific block integer

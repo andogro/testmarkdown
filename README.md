@@ -89,3 +89,27 @@ Future implementations may include the number of yes/no votes for each validator
 ## License
 
 This project is licensed under the GNU Lesser General Public License [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0). See the [LICENSE.md](LICENSE.md) file for details.
+
+
+**Examples:**
+
+```bash
+$ ./poa-ballot-stats
+  example explanation
+```
+
+```bash
+$ ./poa-ballot-stats -h
+
+```
+
+```bash
+$ ./poa-ballot-stats https://core.poa.network -v -p "10 weeks"
+
+```
+
+```bash
+$ ./poa-ballot-stats -c contracts/sokol.json https://sokol.poa.network -v
+```
+
+

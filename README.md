@@ -6,9 +6,9 @@
 Welcome to a [Rust](https://www.rust-lang.org/en-US/) library of the Honey Badger Byzantine Fault Tolerant (BFT) consensus algorithm. The research and protocols for this algorithm are explained in detail in "[The Honey Badger of BFT Protocols](https://eprint.iacr.org/2016/199.pdf)" by Miller et al.
 
 Our implementation modifies the protocols described in the paper in several ways:
-*  We use a [pairing elliptic curve library](https://github.com/ebfull/pairing) to implement pairing-based cryptopgraphy rather than Gap Diffie-Hellman groups. 
+*  We use a [pairing elliptic curve library](https://github.com/ebfull/pairing) to implement pairing-based cryptography rather than Gap Diffie-Hellman groups. 
 * We add a `Terminate` message to the Binary Agreement algorithm. Termination occurs following output, preventing the algorithm from running (or staying in memory) indefinitely. [Issue #53](https://github.com/poanetwork/hbbft/issues/55)
-*  We add a `Conf` message to the Binary Agreement aglorithm. An additional message phase prevents an attack if an adversary controls a network scheduler and a node. [Issue #37](https://github.com/poanetwork/hbbft/issues/37)
+*  We add a `Conf` message to the Binary Agreement algorithm. An additional message phase prevents an attack if an adversary controls a network scheduler and a node. [Issue #37](https://github.com/poanetwork/hbbft/issues/37)
 *  We return additional information from the Subset and Honey Badger algorithms that specifies which node input which data. This allows for identification of potentially malicious nodes.
 * We run a Distributed Key Generation (DKG) protocol which does not require a trusted dealer; nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
 
@@ -39,7 +39,7 @@ We have simplified algorithm naming conventions from the original paper.
 |  Algorithm Name  | Original Name                    | 
 | ---------------- | -------------------------------- | 
 | Honey Badger     | HoneyBadgerBFT                   | 
-| Subset           | Asychronous Common Subset (ACS)  |  
+| Subset           | Asynchronous Common Subset (ACS) |  
 | Broadcast        | Reliable Broadcast (RBC)         |  
 | Binary Agreement | Binary Byzantine Agreement (BBA) |  
 | Coin             | Common Coin                      |  
@@ -69,7 +69,7 @@ We have simplified algorithm naming conventions from the original paper.
 
 This Rust library requires a distributed network environment to function. Details on network requirements TBD. 
 
-_**Note:**: Additional examples are currently in progress._
+_**Note:** Additional examples are currently in progress._
 
 ### Build
 

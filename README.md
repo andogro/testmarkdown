@@ -7,14 +7,14 @@ Welcome to a [Rust](https://www.rust-lang.org/en-US/) library of the Honey Badge
 
 Our implementation modifies the protocols described in the paper in several ways:
 *  We use the [pairing elliptic curve library](https://github.com/ebfull/pairing) to implement pairing-based cryptopgraphy rather than Gap Diffie-Hellman groups. 
-* We add a `Terminate` message to the Binary Agreement algorithm [#53]. This prevents the algorithm from running (or staying in memory) indefinitely.
-*  We add a `Conf` message to the Binary Agreement aglorithm [#37]. An additional message phase prevents an attack if an adversary controls a network scheduler and a node.
-*  We return additional information from the Subset and Honey Badger algorithms, specifying which node input which data. This allows for identification of potentially malicious nodes.
-* We run a Distributed Key Generation (DKG) protocol which does not require a trusted dealer - nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
+* We add a `Terminate` message to the Binary Agreement algorithm [#53](https://github.com/poanetwork/hbbft/issues/55). Termination occurs following output, preventing the algorithm from running (or staying in memory) indefinitely.
+*  We add a `Conf` message to the Binary Agreement aglorithm [#37](https://github.com/poanetwork/hbbft/issues/37). An additional message phase prevents an attack if an adversary controls a network scheduler and a node.
+*  We return additional information from the Subset and Honey Badger algorithms that specifies which node input which data. This allows for identification of potentially malicious nodes.
+* We run a Distributed Key Generation (DKG) protocol which does not require a trusted dealer; nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
 
 Following is an overview of HoneyBadger BFT and basic instructions for getting started. 
 
-**Note:** This library is a work in progress and parts of the algorithm are still in development.
+_**Note:** This library is a work in progress and parts of the algorithm are still in development._
 
 ## What is Honey Badger?
 The Honey Badger consensus algorithm allows nodes in a distributed, potentially asynchronous environment to achieve agreement on transactions. The agreement process does not require a leader node, tolerates corrupted nodes, and makes progress in adverse network conditions. Example use cases are decentralized databases and blockchains.
@@ -32,7 +32,8 @@ In an optimal networking environment, output includes data sent from each node. 
 
 All algorithms in the protocol are modular. Encryption to provide censorship resistance is currently in process for the top level Honey Badger algorithm.
 
-**Algorithm naming conventions:**
+#### Algorithm naming conventions  
+
 We have simplified algorithm naming conventions from the original paper.
 
 |  Algorithm Name  | Original Name                    | 
@@ -43,6 +44,7 @@ We have simplified algorithm naming conventions from the original paper.
 | Binary Agreement | Binary Byzantine Agreement (BBA) |  
 | Coin             | Common Coin                      |  
 
+#### Algorithm short descriptions
 
 - [ ] **[Honey Badger](https://github.com/poanetwork/hbbft/blob/master/src/honey_badger.rs):** The top level protocol proceeds in epochs using the protocols below. 
 
@@ -55,7 +57,7 @@ We have simplified algorithm naming conventions from the original paper.
 - [x] **[Coin](https://github.com/poanetwork/hbbft/blob/master/src/common_coin.rs):** A pseudorandom binary value used by the Binary Agreement protocol.
 
 
-### Current TODOs
+#### Current TODOs
 
 - [ ] Honey Badger encryption - [Issue #41](https://github.com/poanetwork/hbbft/issues/41)
 
@@ -79,10 +81,10 @@ $ cargo build [--release]
 
 ### Example Network Simulation
 
-An example is included to run a simulation of a network using serialization-serde ([https://serde.rs/](https://serde.rs/)) to efficiently serialize and deserialize Rust data structures.
+A basic example is included to run a network simulation.
 
 ```
-$ cargo run --example simulation --features=serialization-serde -- -h
+$ cargo run --example simulation -h
 ```
 
 ## License

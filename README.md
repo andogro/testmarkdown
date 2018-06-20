@@ -12,7 +12,7 @@ Our implementation modifies the protocols described in the paper in several ways
 *  We return additional information from the Subset and Honey Badger algorithms that specifies which node input which data. This allows for identification of potentially malicious nodes.
 * We run a Distributed Key Generation (DKG) protocol which does not require a trusted dealer; nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
 
-Following is an overview of HoneyBadger BFT and basic instructions for getting started. 
+Following is an overview of HoneyBadger BFT and[basic instructions for getting started](#getting-started). 
 
 _**Note:** This library is a work in progress and parts of the algorithm are still in development._
 
@@ -28,11 +28,11 @@ Honey Badger is a modular library composed of several independent algorithms.  T
 
 In an optimal networking environment, output includes data sent from each node. In an adverse environment, the output is an agreed upon subset of data. Either way, the resulting output contains a batch of transactions which is guaranteed to be consistent across all nodes.  
 
-### Algorithms
+## Algorithms
 
 All algorithms in the protocol are modular. Encryption to provide censorship resistance is currently in process for the top level Honey Badger algorithm.
 
-#### Algorithm naming conventions  
+### Algorithm naming conventions  
 
 We have simplified algorithm naming conventions from the original paper.
 
@@ -44,7 +44,7 @@ We have simplified algorithm naming conventions from the original paper.
 | Binary Agreement | Binary Byzantine Agreement (BBA) |  
 | Coin             | Common Coin                      |  
 
-#### Algorithm short descriptions
+### Algorithm short descriptions
 
 - [ ] **[Honey Badger](https://github.com/poanetwork/hbbft/blob/master/src/honey_badger.rs):** The top level protocol proceeds in epochs using the protocols below. 
 
@@ -57,7 +57,7 @@ We have simplified algorithm naming conventions from the original paper.
 - [x] **[Coin](https://github.com/poanetwork/hbbft/blob/master/src/common_coin.rs):** A pseudorandom binary value used by the Binary Agreement protocol.
 
 
-#### Current TODOs
+### Current TODOs
 
 - [ ] Honey Badger encryption - [Issue #41](https://github.com/poanetwork/hbbft/issues/41)
 

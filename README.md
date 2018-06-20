@@ -1,115 +1,108 @@
-# POA ballot stats
+# Honey Badger Byzantine Fault Tolerant (BFT) consensus algorithm
 
-![logo](poa-logo.png)
+[![Build Status](https://travis-ci.com/poanetwork/hbbft.svg?branch=master)](https://travis-ci.com/poanetwork/hbbft) 
+[![Gitter](https://badges.gitter.im/poanetwork/hbbft.svg)](https://gitter.im/poanetwork/hbbft?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-POA ballot stats is a command line tool used to displays voting statistics for the [POA network](https://poa.network/). 
+Welcome to a [Rust](https://www.rust-lang.org/en-US/) library of the Honey Badger Byzantine Fault Tolerant (BFT) consensus algorithm. The research and protocols for this algorithm are explained in detail in "[The Honey Badger of BFT Protocols](https://eprint.iacr.org/2016/199.pdf)" by Miller et al.
 
-[Validators](https://github.com/poanetwork/wiki/wiki/Role-of-Validator) on the network engage in active governance, managing their roles and creating on-chain consensus. This is achieved through a balloting process. 
+Our implementation modifies the protocols described in the paper in several ways:
+*  We use the [pairing elliptic curve library](https://github.com/ebfull/pairing) to implement pairing-based cryptopgraphy rather than Gap Diffie-Hellman groups. 
+* We add a `Terminate` message to the Binary Agreement algorithm [#53]. This prevents the algorithm from running (or staying in memory) indefinitely.
+*  We add a `Conf` message to the Binary Agreement aglorithm [#37]. An additional message phase prevents an attack if an adversary controls a network scheduler and a node.
+*  We return additional information from the Subset and Honey Badger algorithms, specifying which node input which data. This allows for identification of potentially malicious nodes.
+* We run a Distributed Key Generation (DKG) protocol which does not require a trusted dealer - nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
 
-Ballot tracking provides transparency for POA token holders and promotes validator accountability. The poa-ballot-stats tool displays active validator voting participation ordered by percentage of missed votes. 
+Following is an overview of HoneyBadger BFT and basic instructions for getting started. 
 
-The default display includes:
-* non-participation/associated ballots
-* missed %
-* truncated voting key
-* truncated mining key
-* first name last name
+**Note:** This library is a work in progress and parts of the algorithm are still in development.
 
-![Screenshot](screenshot.png)
+## What is Honey Badger?
+The Honey Badger consensus algorithm allows nodes in a distributed, potentially asynchronous environment to achieve agreement on transactions. The agreement process does not require a leader node, tolerates corrupted nodes, and makes progress in adverse network conditions. Example use cases are decentralized databases and blockchains.
+
+Honey Badger is **Byzantine Fault Tolerant**. The protocol can reach consensus with a number of failed nodes f (including complete takeover by an attacker), as long as the total number N of nodes is greater than 3 * f.
+
+Honey Badger is **asynchronous**.  It does not make timing assumptions about message delivery. An adversary can control network scheduling and delay messages without impacting consensus.
+
+## How does it work?
+Honey Badger is a modular library composed of several independent algorithms.  To reach consensus, Honey Badger proceeds in epochs. In each epoch, participating nodes broadcast a set of encrypted data transactions to one another and agree on the contents of those transactions. 
+
+In an optimal networking environment, output includes data sent from each node. In an adverse environment, the output is an agreed upon subset of data. Either way, the resulting output contains a batch of transactions which is guaranteed to be consistent across all nodes.  
+
+### Algorithms
+
+All algorithms in the protocol are modular. Encryption to provide censorship resistance is currently in process for the top level Honey Badger algorithm.
+
+**Algorithm naming conventions:**
+We have simplified algorithm naming conventions from the original paper.
+
+|  Algorithm Name  | Original Name                    | 
+| ---------------- | -------------------------------- | 
+| Honey Badger     | HoneyBadgerBFT                   | 
+| Subset           | Asychronous Common Subset (ACS)  |  
+| Broadcast        | Reliable Broadcast (RBC)         |  
+| Binary Agreement | Binary Byzantine Agreement (BBA) |  
+| Coin             | Common Coin                      |  
 
 
-## Dependencies
-Prior to downloading poa-ballot-stats, install and activate a fully synchronized node connected to the POA network. See the [POA installation guide](https://github.com/poanetwork/wiki/wiki/POA-Installation) for instructions.
+- [ ] **[Honey Badger](https://github.com/poanetwork/hbbft/blob/master/src/honey_badger.rs):** The top level protocol proceeds in epochs using the protocols below. 
 
-**Note:** poa-ballot-stats must access the full network logs. Use these flags when running a node `--pruning=archive --no-warp`
+- [x] **[Subset](https://github.com/poanetwork/hbbft/blob/master/src/common_subset.rs):** Each node inputs data. The nodes agree on a subset of suggested data. 
 
-**Example:**
-```bash
-$ parity --chain c:\path\to\spec.json --reserved-peers c:\path\to\bootnodes.txt --pruning=archive --no-warp
+- [x] **[Broadcast](https://github.com/poanetwork/hbbft/blob/master/src/broadcast.rs):** A proposer node inputs data and every node receives this output.
+
+- [x] **[Binary Agreement](https://github.com/poanetwork/hbbft/blob/master/src/agreement/mod.rs):** Each node inputs a binary value. The nodes agree on a value that was input by at least one correct node. 
+
+- [x] **[Coin](https://github.com/poanetwork/hbbft/blob/master/src/common_coin.rs):** A pseudorandom binary value used by the Binary Agreement protocol.
+
+
+### Current TODOs
+
+- [ ] Honey Badger encryption - [Issue #41](https://github.com/poanetwork/hbbft/issues/41)
+
+- [ ] Dynamic Honey Badger (adding and removing nodes in a live network environment) - [Issue #47](https://github.com/poanetwork/hbbft/issues/47#issuecomment-394640406)
+
+- [ ] Networking example to detail Honey Badger implementation
+
+## Getting Started
+
+This Rust library requires a distributed network environment to function. Details on network requirements TBD. 
+
+**Note: Additional examples are currently in progress.**
+
+### Build
+
+Requires `rust` and `cargo`: [installation instructions.](https://www.rust-lang.org/en-US/install.html)
+
+```
+$ cargo build [--release]
 ```
 
-## Installation
+### Example Network Simulation
 
-### Stable Release
+An example is included to run a simulation of a network using serialization-serde ([https://serde.rs/](https://serde.rs/)) to efficiently serialize and deserialize Rust data structures.
 
-Download the archive for your platform from the latest [release](https://github.com/poanetwork/poa-ballot-stats/releases) and unpack. Run the tool with `./poa-ballot-stats <options>`.
-
-#### Options
-
-`-h, --help` view command line options and help information. 
-
-`<url>` specify a different endpoint if your node uses a non-standard port. The default connects to a local node `http://127.0.0.1:8545`.
-
-`-V, --version` prints version information.
-
-
-`-v, --verbose` display collected ballot and key change events and the list of participating and abstaining voters for each ballot.
-
-`-c, --contracts <contracts>`  append a map with POA contract addresses in JSON format. The current maps for the main and test network are in the `contracts` folder. Default is the main network `core.json` file.
-
-`-p, --period <period>`  a time interval in hours, days, months, etc. For example, `-p "10 weeks"` only counts participation in ballots created within the last 10 weeks. 
-
-`-b, --block` takes the earliest block _number_ as a decimal option. For example, `-b 524647` counts participation from block number 524647 onward.
-
-
-**Examples:**
-
-```bash
-$ ./poa-ballot-stats
-$ ./poa-ballot-stats -h
-$ ./poa-ballot-stats https://core.poa.network -v -p "10 weeks"
-$ ./poa-ballot-stats -c contracts/sokol.json https://sokol.poa.network -v
 ```
-
-### Latest code
-
-If you have a recent version of [Rust](https://www.rust-lang.org/), you can clone this repository and use `cargo run --` instead of `./poa-ballot-stats` to compile and run the latest version of the code.
-
-## Troubleshooting
-
-### No Events Found error
-
-1.	Parity must be fully synced to the correct node and running in full mode, not "light" mode. Check Parity UI and/or Task Manager to confirm Parity is synced and actively connected to peers.
-
-2.	The correct network must be selected in Parity. The Parity UI will show the current network selection in green. Make sure this is the correct network, and not the Foundation or other Etherium network.
-
-![Screenshot](screenshot2.png)
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. See the [tags on this repository](https://github.com/your/project/tags) and the [changelog](CHANGELOG.md) for historical changes.
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and pull request protocol.
-
-Future implementations may include the number of yes/no votes for each validator and other data points. Proposed requirements and notes on this issue are described in RFC9 [Statistics of ballots](https://github.com/poanetwork/RFC/issues/9).
-
+$ cargo run --example simulation --features=serialization-serde -- -h
+```
 
 ## License
 
-This project is licensed under the GNU Lesser General Public License [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0). See the [LICENSE.md](LICENSE.md) file for details.
+[![License: LGPL v3]([https://img.shields.io/badge/License-LGPL%20v3-blue.svg](https://img.shields.io/badge/License-LGPL%20v3-blue.svg))]([https://www.gnu.org/licenses/lgpl-3.0](https://www.gnu.org/licenses/lgpl-3.0))
 
+This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
 
-**Examples:**
+## References
 
-```bash
-$ ./poa-ballot-stats
-  example explanation
-```
+* [The Honey Badger of BFT Protocols](https://eprint.iacr.org/2016/199.pdf)
 
-```bash
-$ ./poa-ballot-stats -h
+* [Honey Badger Video](https://www.youtube.com/watch?v=Qone4j1hCt8)
 
-```
+* Other language implementations
 
-```bash
-$ ./poa-ballot-stats https://core.poa.network -v -p "10 weeks"
+  * [Python](https://github.com/amiller/HoneyBadgerBFT)
 
-```
+  * [Go](https://github.com/anthdm/hbbft)
 
-```bash
-$ ./poa-ballot-stats -c contracts/sokol.json https://sokol.poa.network -v
-```
+  * [Erlang](https://github.com/helium/erlang-hbbft)
 
-
+  * [Rust](https://github.com/rphmeier/honeybadger) - unfinished implementation

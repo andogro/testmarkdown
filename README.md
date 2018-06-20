@@ -12,7 +12,7 @@ Our implementation modifies the protocols described in the paper in several ways
 *  We return additional information from the Subset and Honey Badger algorithms that specifies which node input which data. This allows for identification of potentially malicious nodes.
 * We run a Distributed Key Generation (DKG) protocol which does not require a trusted dealer; nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
 
-Following is an overview of HoneyBadger BFT and[basic instructions for getting started](#getting-started). 
+Following is an overview of HoneyBadger BFT and [basic instructions for getting started](#getting-started). 
 
 _**Note:** This library is a work in progress and parts of the algorithm are still in development._
 
@@ -69,7 +69,7 @@ We have simplified algorithm naming conventions from the original paper.
 
 This Rust library requires a distributed network environment to function. Details on network requirements TBD. 
 
-**Note: Additional examples are currently in progress.**
+_**Note:**: Additional examples are currently in progress._
 
 ### Build
 
@@ -89,7 +89,7 @@ $ cargo run --example simulation -h
 
 ## License
 
-[![License: LGPL v3]([https://img.shields.io/badge/License-LGPL%20v3-blue.svg](https://img.shields.io/badge/License-LGPL%20v3-blue.svg))]([https://www.gnu.org/licenses/lgpl-3.0](https://www.gnu.org/licenses/lgpl-3.0))
+[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
 

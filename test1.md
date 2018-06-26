@@ -1,112 +1,109 @@
-# POA ballot stats
+# POA Explorer [![CircleCI](https://circleci.com/gh/poanetwork/poa-explorer.svg?style=svg&circle-token=f8823a3d0090407c11f87028c73015a331dbf604)](https://circleci.com/gh/poanetwork/poa-explorer) [![Coverage Status](https://coveralls.io/repos/github/poanetwork/poa-explorer/badge.svg?branch=master)](https://coveralls.io/github/poanetwork/poa-explorer?branch=master)
 
-POA ballot stats is a command line tool that displays voting statistics for the [POA network](https://poa.network/). The ability to monitor voting records is essential to maintaining POA network integrity. Ballot proposals change the network state, and all network participants have a right to view and understand the potential impacts of these changes. 
+POA Explorer provides a straightforward interface for users to view, confirm and inspect transactions on **all** EVM (Ethereum Virtual Machine) blockchains. This includes the Ethereum main and test networks as well as Ethereum forks/sidechains such as the POA Network. Following is an overview of the project and [instructions for getting started]().
 
-Validators on the network engage in active governance, managing their roles and creating on-chain consensus. This is achieved through a balloting process. 
+## Why POA Explorer?
 
-1.	A ballot is created by an existing validator.
-2.	The ballot remains open for a minimum of 48 hours (exact length of time is determined on ballot creation). During this open period, validators are expected to investigate, discuss and perform due diligence before placing their vote. 
-3.	When the time period expires, the ballot is closed. No more votes are allowed.
-4.	A ballot is finalized by a validator, and the results are submitted to the network. Any validator can finalize a closed ballot.
+Currently available block explorers (for example Etherscan and Etherchain) are closed systems which do not provide transaction information for Ethereum forks and sidechains. As sidechains continue to proliferate in both private and public settings, transparent tools are needed to analyze and validate transactions. POA Explorer gives users the ability to search transactions, view accounts and balances, and verify smart contracts on the entire Ethereum network ecosystem.
 
-Additional information on [ballot types and limits](https://github.com/poanetwork/wiki/wiki/Ballots-Overview.-Life-cycle-and-limits)
+The first release will include a block explorer for the POA core and Sokol test networks. Additional networks will be added in upcoming versions. 
 
-Additional information on the [Validator role](https://github.com/poanetwork/wiki/wiki/Role-of-Validator)
+### Features
 
-Ballot tracking provides transparency for POA token holders and promotes validator accountability. The poa-ballot-stats tool runs on the command line and displays POA network validator voting participation. Each validator is shown by order of missed votes. Results are not shown from validators who have been removed from the network. 
+Development is ongoing. Please see the project timeline for projected milestones and rollouts.
 
-The default display includes:
-- non-participation/associated ballots
-- missed %
-- truncated voting key
-- truncated mining key
-- first name last name
+[x] Open Source Development: The code is community driven and available for anyone to use and modify as needed. 
 
-## Screenshot
+[x] Full Transaction(Tx) History: 
 
-Add new screenshot here
+[x] Intuitive UI: Drag and drop functionality
 
-![Screenshot](screenshot.png)
+[x] All networks
 
+[x] ERC20 Token Support
 
-# Dependencies
-Prior to downloading poa-ballot-stats you must install and activate a fully syncronized node connected to the POA network.
-**Note:** synchronization can take several hous depending on connection speed. See the [POA installation guide](https://github.com/poanetwork/wiki/wiki/POA-Installation)
-**Note:** poa-ballot-stats must access the full network logs. Use these flags when running a node --pruning=archive --no-warp
+## Getting Started
 
-Example:
+Running a local version of POA Explorer (MacOS and Linux)
 
-```bash
-$ parity --chain c:\path\to\spec.json --reserved-peers c:\path\to\bootnodes.txt --pruning=archive --no-warp
-```
+### Requirements
 
-# Usage
+* Erlang/OTP 20.2+ <link>
+* Elixir 1.6+      <link>
+* Postgres 10.0    <link>
+* Node.js 9.10+    <link>
+* GitHub for code storage
 
-## Stable Release
+### Setup Instructions
 
-Download the archive for your platform from the latest [release](https://github.com/poanetwork/poa-ballot-stats/releases) and unpack it. Run the tool with `./poa-ballot-stats <options>`.
+  * Set up default configurations: 
+    * `cp apps/explorer/config/dev.secret.exs.example apps/explorer/config/dev.secret.exs`
+    * `cp apps/explorer_web/config/dev.secret.exs.example apps/explorer_web/config/dev.secret.exs`
+  * Install dependencies: `mix do deps.get, local.rebar, deps.compile, compile`
+  * Create and migrate your database: `mix ecto.create && mix ecto.migrate`
+  * Install Node.js dependencies:
+    * `cd apps/explorer_web/assets && npm install; cd -`
+    * `cd apps/explorer && npm install; cd -`
+  * Start Phoenix with `mix phx.server` or run with IEx (Interactive Elixer): `iex -S mix phx.server`
 
-You can view the command line options with `-h`, and specify a different endpoint if your node e.g.
-uses a non-standard port. By default, it tries to connect to a local node `http://127.0.0.1:8545`.
-
-In verbose mode, with `-v`, the list of collected ballot and key change events is displayed, and for each ballot the list of participating and abstaining voters.
-
-The `-c` option takes a map with the POA contracts' addresses in JSON format. You can find the 
-current maps for the main and test network the `contracts` folder. By default, it uses `core.json`,
-for the main network.
-
-The `-p` option takes a time interval in hours, days, months, etc. E.g. `-p "10 weeks"` will only count participation in ballots that were created within the last 10 weeks. Alternatively, instead of a _time_, you can specify the earliest block _number_ as a decimal integer with the `-b` option.
+Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 
+### CircleCI Updates
 
-## Examples
+Configure your local CCMenu with the following url: [`https://circleci.com/gh/poanetwork/poa-explorer.cc.xml?circle-token=f8823a3d0090407c11f87028c73015a331dbf604`](https://circleci.com/gh/poanetwork/poa-explorer.cc.xml?circle-token=f8823a3d0090407c11f87028c73015a331dbf604)
 
-Examples:
 
-```bash
-$ ./poa-ballot-stats -h
-$ ./poa-ballot-stats
-$ ./poa-ballot-stats https://core.poa.network -v -p "10 weeks"
-$ ./poa-ballot-stats -c contracts/sokol.json https://sokol.poa.network -v
-```
+### Testing
 
-## Latest code
+#### Requirements
 
-If you have a recent version of [Rust](https://www.rust-lang.org/), you can clone this repository and use `cargo run --` instead of `./poa-ballot-stats` to compile and run the latest version of the code.
+  * PhantomJS (for wallaby)
 
-# Troubleshooting
+#### Running the tests
 
-## No Events Found error
+  * Build the assets: `cd apps/explorer_web/assets && npm run build; cd -`
+  * Format the Elixir code: `mix format`
+  * Run the test suite with coverage for whole umbrella project: `mix coveralls.html --umbrella`
+  * Lint the Elixir code: `mix credo --strict`
+  * Run the dialyzer: `mix dialyzer --halt-exit-status`
+  * Check the Elixir code for vulnerabilities:
+    * `cd apps/explorer && mix sobelow --config; cd -`
+    * `cd apps/explorer_web && mix sobelow --config; cd -`
+  * Lint the JavaScript code: `cd apps/explorer_web/assets && npm run eslint; cd -`
 
-1.	Parity must be fully synced to the correct node and running in full mode, not "light" mode. Check Parity UI and/or Task Manager to confirm Parity is synced and actively connected to peers.
 
-2.	The correct network must be selected in Parity. The Parity UI will show the current network selection in green. Make sure this is the correct network, and not the Foundation or other Etherium network.
+### API Documentation
 
-![Screenshot](screenshot.png)
+To view Modules and API Reference documentation:
 
-3. If running Parity on the Sokol test network, check that you are connecting to the Sokol network using the -c flag on cargo run.
+1. `mix docs` generates documentation
+2. `open doc/index.html` to view
 
-# Contribute
 
-Future implementations may include the number of yes/no votes for each validator and other data points. Proposed requirements and notes on this issue are described in RFC9 [Statistics of ballots](https://github.com/poanetwork/RFC/issues/9).
+#### Umbrella Project Organization
 
-## To Contribute
-1. Fork the repository
-https://github.com/poanetwork/poa-ballot-stats/fork
-2. Create a feature branch
-3. Write tests to cover the work 
-4. Commit changes
-5. Push to the branch
-6. Create a new pull request following the PR protocol below
+This repository is an [umbrella project](https://elixir-lang.org/getting-started/mix-otp/dependencies-and-umbrella-projects.html): each directory under `apps/` is a separate [Mix](https://hexdocs.pm/mix/Mix.html) project and [OTP application](https://hexdocs.pm/elixir/Application.html), but the projects can use each other as a dependency in their `mix.exs`.
 
-## Pull Request (PR) Protocol
+Each OTP application has a restricted domain
 
-All pull requests must include: 
-* A clear, readable description of the purpose of the PR
-* A clear, readable description of changes
-* A title that includes (Fix), (Feature), or (Refactor)
-**example:** (Fix) price of 1 token in Wei > 18 decimals
-* A single commit message for one specific fix or feature. A separate PR should be made for each specific change.
-* Any additional concerns or comments (optional)
+| Directory               | OTP Application     | Namespace         | Purpose                                                                                                                                                                                                                                                                                                                                                                         |
+|:------------------------|:--------------------|:------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `apps/ethereum_jsonrpc` | `:ethereum_jsonrpc` | `EthereumJSONRPC` | Ethereum JSONRPC client.  It is allowed to know `Explorer`'s param format, but it cannot directly depend on `:explorer`                                                                                                                                                                                                                                                         |
+| `apps/explorer`         | `:explorer`         | `Explorer`        | Storage for the indexed chain.  Can read and write to the backing storage.  MUST be able to boot in a read-only mode when run independently from `:indexer`, so cannot depend on `:indexer` as that would start `:indexer` indexing.                                                                                                                                            |
+| `apps/explorer_web`     | `:explorer_web`     | `ExplorerWeb`     | Phoenix interface to `:explorer`.  The minimum interface to allow web access should go in `:explorer_web`.  Any business rules or interface that is not tied directly to `Phoenix` or `Plug` should go in `:explorer`. MUST be able to boot in a read-only mode when run independently from `:indexer`, so cannot depend on `:indexer` as that would start `:indexer` indexing. |
+| `apps/indexer`          | `:indexer`          | `Indexer`         | Uses `:ethereum_jsonrpc` to index chain and batch import data into `:explorer`.  Any process, `Task`, or `GenServer` that automatically reads from the chain and writes to `:explorer` should be in `:indexer`, so that automatic writes are restricted to `:indexer` and read-only mode can be achieved by not running `:indexer`.                                             |
 
-All accepted and completed PRs are updated in the Wiki documentation.
+
+
+
+## Internationalization
+
+The app is currently internationalized. It is only localized to U.S. English.
+
+To translate new strings, run `cd apps/explorer_web; mix gettext.extract --merge` and edit the new strings in `apps/explorer_web/priv/gettext/en/LC_MESSAGES/default.po`.
+
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)

@@ -36,9 +36,9 @@ Running a local version of POA Explorer (MacOS and Linux)
 
 ### Setup Instructions
 
-  1. Set up default configurations: 
-    * `cp apps/explorer/config/dev.secret.exs.example apps/explorer/config/dev.secret.exs`
-    * `cp apps/explorer_web/config/dev.secret.exs.example apps/explorer_web/config/dev.secret.exs`
+  1. Set up default configurations:  
+`cp apps/explorer/config/dev.secret.exs.example apps/explorer/config/dev.secret.exs`  
+`cp apps/explorer_web/config/dev.secret.exs.example apps/explorer_web/config/dev.secret.exs`
 
   2. Install dependencies: `mix do deps.get, local.rebar, deps.compile, compile`
 

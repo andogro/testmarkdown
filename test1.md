@@ -43,17 +43,17 @@ Running a local version of POA Explorer (MacOS and Linux)
   2. Install dependencies  
 `mix do deps.get, local.rebar, deps.compile, compile`
 
-  3. Create and migrate your database 
- `mix ecto.create && mix ecto.migrate`
+  3. Create and migrate your database  
+  `mix ecto.create && mix ecto.migrate`
 
   4. Install Node.js dependencies  
-`cd apps/explorer_web/assets && npm install; cd -`  
-`cd apps/explorer && npm install; cd -`
+  `cd apps/explorer_web/assets && npm install; cd -`
+  `cd apps/explorer && npm install; cd -`
 
-  5. Start Phoenix 
-`mix phx.server`  
-or run with IEx (Interactive Elixer) 
-`iex -S mix phx.server`
+  5. Start Phoenix   
+  `mix phx.server`   
+  or run with IEx (Interactive Elixer)   
+  `iex -S mix phx.server`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 

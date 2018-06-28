@@ -17,17 +17,17 @@ The first release will include a block explorer for the POA core and Sokol test 
 
 Development is ongoing. Please see the [project timeline](https://github.com/poanetwork/poa-explorer/wiki/Timeline-for-POA-Block-Explorer) for projected milestones.
 
-[x] **Open source development**: The code is community driven and available for anyone to use, explore and improve.
+- [x] **Open source development**: The code is community driven and available for anyone to use, explore and improve.
 
-[x] **Real time transaction tracking**: Transactions are updated in real time - no page refresh required. Infinite scrolling is also enabled.
+- [x] **Real time transaction tracking**: Transactions are updated in real time - no page refresh required. Infinite scrolling is also enabled.
 
-[x] **Smart contract interaction**: Users can read and verify Solidity smart contracts and access pre-existing contracts to fast-track development. Support for Vyper, LLL, and Web Assembly contracts is in progress.  
+- [x] **Smart contract interaction**: Users can read and verify Solidity smart contracts and access pre-existing contracts to fast-track development. Support for Vyper, LLL, and Web Assembly contracts is in progress.  
 
-[x] **ERC20 token support**: Solution supports ERC20 token ecosystem. Future releases will support additional token types including ERC223, ERC721, and ERC1155. 
+- [x] **ERC20 token support**: Solution supports ERC20 token ecosystem. Future releases will support additional token types including ERC223, ERC721, and ERC1155. 
 
-[x] **User customization**: Users can easily deploy on a network and customize the Bootstrap interface. 
+- [x] **User customization**: Users can easily deploy on a network and customize the Bootstrap interface. 
 
-[x] **Ethereum sidechain networks**: Version 1 supports the POA main network and Sokol test network. Future iterations will support Ethereum mainnet, Ethereum testnets, forks like Ethereum Classic, sidechains, and private EVM networks.
+- [x] **Ethereum sidechain networks**: Version 1 supports the POA main network and Sokol test network. Future iterations will support Ethereum mainnet, Ethereum testnets, forks like Ethereum Classic, sidechains, and private EVM networks.
 
 ## Getting Started
 

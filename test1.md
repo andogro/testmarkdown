@@ -1,6 +1,6 @@
 # POA Explorer [![CircleCI](https://circleci.com/gh/poanetwork/poa-explorer.svg?style=svg&circle-token=f8823a3d0090407c11f87028c73015a331dbf604)](https://circleci.com/gh/poanetwork/poa-explorer) [![Coverage Status](https://coveralls.io/repos/github/poanetwork/poa-explorer/badge.svg?branch=master)](https://coveralls.io/github/poanetwork/poa-explorer?branch=master)
 
-POA Explorer provides a comprehensive, easy-to-use interface for users to view, confirm, and inspect transactions on _all EVM_ (Ethereum Virtual Machine) blockchains. This includes the Ethereum main and test networks as well as **Ethereum forks and sidechains**. 
+POA Explorer provides a comprehensive, easy-to-use interface for users to view, confirm, and inspect transactions on **all EVM** (Ethereum Virtual Machine) blockchains. This includes the Ethereum main and test networks as well as **Ethereum forks and sidechains**. 
 
 Following is an overview of the project and instructions for [getting started](#getting-started).
 
@@ -45,24 +45,24 @@ The [development stack page](https://github.com/poanetwork/poa-explorer/wiki/Dev
 
 ### Setup Instructions
 
-  1. Fork and download repository  
-  [`https://github.com/poanetwork/poa-explorer/fork`](https://github.com/poanetwork/poa-explorer/fork)`
+  1. Fork and clone repository.  
+  [`https://github.com/poanetwork/poa-explorer/fork`](https://github.com/poanetwork/poa-explorer/fork)  
 
-  2. Set up default configurations  
+  2. Set up default configurations.  
 `cp apps/explorer/config/dev.secret.exs.example apps/explorer/config/dev.secret.exs`  
 `cp apps/explorer_web/config/dev.secret.exs.example apps/explorer_web/config/dev.secret.exs`
 
-  3. Install dependencies  
+  3. Install dependencies.  
 `mix do deps.get, local.rebar, deps.compile, compile`
 
-  4. Create and migrate database  
+  4. Create and migrate database.  
   `mix ecto.create && mix ecto.migrate`
 
-  5. Install Node.js dependencies  
+  5. Install Node.js dependencies.  
   `cd apps/explorer_web/assets && npm install; cd -`
   `cd apps/explorer && npm install; cd -`
 
-  6. Start Phoenix Server  
+  6. Start Phoenix Server.  
   `mix phx.server`   
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
@@ -80,7 +80,7 @@ _Additional runtime options:_
 
 This repository is an [umbrella project](https://elixir-lang.org/getting-started/mix-otp/dependencies-and-umbrella-projects.html). Each directory under `apps/` is a separate [Mix](https://hexdocs.pm/mix/Mix.html) project and [OTP application](https://hexdocs.pm/elixir/Application.html), but the projects can use each other as a dependency in their `mix.exs`.
 
-Each OTP application has a restricted domain
+Each OTP application has a restricted domain.
 
 | Directory               | OTP Application     | Namespace         | Purpose                                                                                                                                                                                                                                                                                                                                                                         |
 |:------------------------|:--------------------|:------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -147,7 +147,7 @@ We would like to thank the [EthPrize foundation](http://ethprize.io/) for their 
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and pull request protocol. We expect contributors to follow our [code of conduct](CODE_OF_CONDUCT.md) while submitting code or comments.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and pull request protocol. We expect contributors to follow our [code of conduct](CODE_OF_CONDUCT.md) when submitting code or comments.
 
 
 ## License

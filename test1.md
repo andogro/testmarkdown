@@ -45,8 +45,8 @@ The [development stack page](https://github.com/poanetwork/poa-explorer/wiki/Dev
 
 ### Setup Instructions
 
-  1. Fork and download repository
-  [https://github.com/poanetwork/poa-explorer/fork](https://github.com/poanetwork/poa-explorer/fork)  
+  1. Fork and download repository  
+  `[https://github.com/poanetwork/poa-explorer/fork](https://github.com/poanetwork/poa-explorer/fork)`
 
   2. Set up default configurations  
 `cp apps/explorer/config/dev.secret.exs.example apps/explorer/config/dev.secret.exs`  

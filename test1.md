@@ -2,7 +2,7 @@
 
 POA Explorer provides a comprehensive, easy-to-use interface for users to view, confirm, and inspect transactions on all EVM (Ethereum Virtual Machine) blockchains. This includes the Ethereum main and test networks as well as Ethereum forks and sidechains. 
 
-Following is an overview of the project and instructions for [getting started]().
+Following is an overview of the project and instructions for [getting started](#getting-started).
 
 ## About POA Explorer?
 

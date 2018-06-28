@@ -62,7 +62,7 @@ The [development stack page](https://github.com/poanetwork/poa-explorer/wiki/Dev
   `cd apps/explorer_web/assets && npm install; cd -`
   `cd apps/explorer && npm install; cd -`
 
-  6. Start Phoenix Server
+  6. Start Phoenix Server  
   `mix phx.server`   
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
@@ -107,22 +107,24 @@ To monitor build status, configure your local [CCMenu](http://ccmenu.org/) with 
   1. Build the assets.  
   `cd apps/explorer_web/assets && npm run build; cd -`
   
-  2. Format the Elixir code. 
-   `mix format`
+  2. Format the Elixir code.  
+  `mix format`
   
-  3. Run the test suite with coverage for whole umbrella project. 
-   `mix coveralls.html --umbrella`
+  3. Run the test suite with coverage for whole umbrella project.  
+  `mix coveralls.html --umbrella`
   
-  4. Lint the Elixir code.
-   `mix credo --strict`
+  4. Lint the Elixir code.  
+  `mix credo --strict`
   
-  5. Run the dialyzer.
-   `mix dialyzer --halt-exit-status`
+  5. Run the dialyzer.  
+  `mix dialyzer --halt-exit-status`
   
-  6. Check the Elixir code for vulnerabilities.
-  `cd apps/explorer && mix sobelow --config; cd -`
+  6. Check the Elixir code for vulnerabilities.  
+  `cd apps/explorer && mix sobelow --config; cd -`  
   `cd apps/explorer_web && mix sobelow --config; cd -`
-  * Lint the JavaScript code: `cd apps/explorer_web/assets && npm run eslint; cd -`
+
+  7. Lint the JavaScript code.  
+  `cd apps/explorer_web/assets && npm run eslint; cd -`
 
 
 ### API Documentation

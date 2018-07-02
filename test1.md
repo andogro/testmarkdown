@@ -1,157 +1,64 @@
-# POA Explorer [![CircleCI](https://circleci.com/gh/poanetwork/poa-explorer.svg?style=svg&circle-token=f8823a3d0090407c11f87028c73015a331dbf604)](https://circleci.com/gh/poanetwork/poa-explorer) [![Coverage Status](https://coveralls.io/repos/github/poanetwork/poa-explorer/badge.svg?branch=master)](https://coveralls.io/github/poanetwork/poa-explorer?branch=master)
+ # Binary Byzantine Agreement Protocol
 
-POA Explorer provides a comprehensive, easy-to-use interface for users to view, confirm, and inspect transactions on **all EVM** (Ethereum Virtual Machine) blockchains. This includes the Ethereum main and test networks as well as **Ethereum forks and sidechains**. 
+ The Binary Agreement protocol allows each node to input one binary (`bool`) value, and will
+ output a binary value. The output is guaranteed to have been input by at least one correct
+ node, and all correct nodes will have the same output.
 
-Following is an overview of the project and instructions for [getting started](#getting-started).
+ ## How it works
 
-## About POA Explorer
+ The algorithm proceeds in _epochs_, and the number of epochs it takes until it terminates is
+ unbounded in theory but has a finite expected value. Each node keeps track of an _estimate_
+ value `e`, which is initialized to the node's own input. Let's call a value `v`
+ that has been input by at least one correct node and such that `!v` hasn't been _output_ by any
+ correct node yet, a _viable output_. The estimate will always be a viable output.
 
-POA Explorer is an Elixir application that allows users to search transactions, view accounts and balances, and verify smart contracts on the entire Ethereum network including all forks and sidechains.
+ All messages are annotated with the epoch they belong to, but we omit that here for brevity.
 
-Currently available block explorers (i.e. Etherscan and Etherchain) are closed systems which are not independently verifiable.  As Ethereum sidechains continue to proliferate in both private and public settings, transparent tools are needed to analyze and validate transactions.
+ * At the beginning of each epoch, we multicast `BVal(e)`. It translates to: "I know that `e` is
+ a viable output."
 
-The first release will include a block explorer for the POA core and Sokol test networks. Additional networks will be added in upcoming versions.
- 
+ * Once we receive `BVal(v)` with the same value from _f + 1_ different validators, we know that
+   at least one of them must be correct. So we know that `v` is a viable output and we multicast `BVal(v)`.
+ (Even if we already multicast `BVal(!v)`)
 
-### Features
+ * Let's say a node _believes in `v`_ if it received `BVal(v)` from _2 f + 1_ validators.
+ For the _first_ value `v` we believe in, we multicast `Aux(v)`. It translates to:
+ "I know that all correct nodes will eventually know that `v` is a viable output.
+ I'm not sure about `!v` yet."
 
-Development is ongoing. Please see the [project timeline](https://github.com/poanetwork/poa-explorer/wiki/Timeline-for-POA-Block-Explorer) for projected milestones.
+ * Since every node will receive at least _2 f + 1_ `BVal` messages from correct validators,
+ there is at least one value `v`, such that every node receives _f + 1_ `BVal(v)` messages.
+ As a consequence, every correct validator will multicast `BVal(v)` itself. Hence we are
+ guaranteed to receive _2 f + 1_ `BVal(v)` messages.
+ In short: If _any_ correct node believes in `v`, _every_ correct node will.
 
-- [x] **Open source development**: The code is community driven and available for anyone to use, explore and improve.
+ * Every correct node will eventually send exactly one `Aux`, so we will receive at least
+ _2 f + 1_ `Aux` messages with values we believe in. At that point, we define the set `vals`
+ of _candidate values_: the set of values we believe in _and_ have received in an `Aux`.
 
-- [x] **Real time transaction tracking**: Transactions are updated in real time - no page refresh required. Infinite scrolling is also enabled.
+ * Once we have the set of candidate values, we obtain a _coin value_ `s` (see below).
 
-- [x] **Smart contract interaction**: Users can read and verify Solidity smart contracts and access pre-existing contracts to fast-track development. Support for Vyper, LLL, and Web Assembly contracts is in progress.  
+ * If there is only a single candidate value `b`, we set our estimate `e = b`. If `s == b`,
+ we _output_ and send a `Term(b)` message which is interpreted as `BVal(b)` and `Aux(b)` for
+ all future epochs. If `s != b`, we just proceed to the next epoch.
 
-- [x] **ERC20 token support**: Solution supports ERC20 token ecosystem. Future releases will support additional token types including ERC223, ERC721, and ERC1155. 
+ * If both values are candidates, we set `e = s` and proceed to the next epoch.
 
-- [x] **User customization**: Users can easily deploy on a network and customize the Bootstrap interface. 
+ In epochs that are 0 modulo 3, the value `s` is `true`. In 1 modulo 3, it is `false`. In the
+ case 2 modulo 3, we carefully flip a common coin to determine a pseudorandom `s`.
 
-- [x] **Ethereum sidechain networks**: Version 1 supports the POA main network and Sokol test network. Future iterations will support Ethereum mainnet, Ethereum testnets, forks like Ethereum Classic, sidechains, and private EVM networks.
+ An adversary that knows each coin value, controls a few validators and controls network
+ scheduling can delay the delivery of `Aux` and `BVal` messages to influence which candidate
+ values the nodes will end up with. In some circumstances that allows them to stall the network.
+ This is even true if the coin is flipped too early: the adversary must not learn about the coin
+ value early enough to delay enough `Aux` messages. That's why in the third case, the value `s`
+ is determined as follows:
 
-## Getting Started
+ * We multicast a `Conf` message containing our candidate values.
 
-We use [Terraform](https://www.terraform.io/intro/getting-started/install.html) to build the correct infrastructure to run POA Explorer. See [https://github.com/poanetwork/poa-explorer-infra](https://github.com/poanetwork/poa-explorer-infra) for details.
+ * Since every good node believes in all values it puts into its `Conf` message, we will
+ eventually receive _2 f + 1_ `Conf` messages containing only values we believe in. Then we
+ trigger the common coin.
 
-### Requirements
-
-The [development stack page](https://github.com/poanetwork/poa-explorer/wiki/Development-Stack) contains more information about these frameworks.
-
-* [Erlang/OTP 20.2+](https://github.com/erlang/otp)
-* [Elixir 1.6+](https://elixir-lang.org/)
-* [Postgres 10.0](https://www.postgresql.org/)
-* [Node.js 9.10+](https://nodejs.org/en/)
-* GitHub for code storage
-
-### Setup Instructions
-
-  1. Fork and clone repository.  
-  [`https://github.com/poanetwork/poa-explorer/fork`](https://github.com/poanetwork/poa-explorer/fork)  
-
-  2. Set up default configurations.  
-`cp apps/explorer/config/dev.secret.exs.example apps/explorer/config/dev.secret.exs`  
-`cp apps/explorer_web/config/dev.secret.exs.example apps/explorer_web/config/dev.secret.exs`
-
-  3. Install dependencies.  
-`mix do deps.get, local.rebar, deps.compile, compile`
-
-  4. Create and migrate database.  
-  `mix ecto.create && mix ecto.migrate`
-
-  5. Install Node.js dependencies.  
-  `cd apps/explorer_web/assets && npm install; cd -`
-  `cd apps/explorer && npm install; cd -`
-
-  6. Start Phoenix Server.  
-  `mix phx.server`   
-
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
-
-_Additional runtime options:_
-
-*  Run Phoenix Server with IEx (Interactive Elixer)  
-`iex -S mix phx.server`
-
-*  Run Phoenix Server with real time indexer  
-`DEBUG_INDEXER=1 iex -S mix phx.server`
-
-
-### Umbrella Project Organization
-
-This repository is an [umbrella project](https://elixir-lang.org/getting-started/mix-otp/dependencies-and-umbrella-projects.html). Each directory under `apps/` is a separate [Mix](https://hexdocs.pm/mix/Mix.html) project and [OTP application](https://hexdocs.pm/elixir/Application.html), but the projects can use each other as a dependency in their `mix.exs`.
-
-Each OTP application has a restricted domain.
-
-| Directory               | OTP Application     | Namespace         | Purpose                                                                                                                                                                                                                                                                                                                                                                         |
-|:------------------------|:--------------------|:------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `apps/ethereum_jsonrpc` | `:ethereum_jsonrpc` | `EthereumJSONRPC` | Ethereum JSONRPC client.  It is allowed to know `Explorer`'s param format, but it cannot directly depend on `:explorer`                                                                                                                                                                                                                                                         |
-| `apps/explorer`         | `:explorer`         | `Explorer`        | Storage for the indexed chain.  Can read and write to the backing storage.  MUST be able to boot in a read-only mode when run independently from `:indexer`, so cannot depend on `:indexer` as that would start `:indexer` indexing.                                                                                                                                            |
-| `apps/explorer_web`     | `:explorer_web`     | `ExplorerWeb`     | Phoenix interface to `:explorer`.  The minimum interface to allow web access should go in `:explorer_web`.  Any business rules or interface not tied directly to `Phoenix` or `Plug` should go in `:explorer`. MUST be able to boot in a read-only mode when run independently from `:indexer`, so cannot depend on `:indexer` as that would start `:indexer` indexing. |
-| `apps/indexer`          | `:indexer`          | `Indexer`         | Uses `:ethereum_jsonrpc` to index chain and batch import data into `:explorer`.  Any process, `Task`, or `GenServer` that automatically reads from the chain and writes to `:explorer` should be in `:indexer`. This restricts automatic writes to `:indexer` and read-only mode can be achieved by not running `:indexer`.                                             |
-
-
-
-### CircleCI Updates
-
-To monitor build status, configure your local [CCMenu](http://ccmenu.org/) with the following url: [`https://circleci.com/gh/poanetwork/poa-explorer.cc.xml?circle-token=f8823a3d0090407c11f87028c73015a331dbf604`](https://circleci.com/gh/poanetwork/poa-explorer.cc.xml?circle-token=f8823a3d0090407c11f87028c73015a331dbf604)
-
-
-### Testing
-
-#### Requirements
-
-  * PhantomJS (for wallaby)
-
-#### Running the tests
-
-  1. Build the assets.  
-  `cd apps/explorer_web/assets && npm run build; cd -`
-  
-  2. Format the Elixir code.  
-  `mix format`
-  
-  3. Run the test suite with coverage for whole umbrella project.  
-  `mix coveralls.html --umbrella`
-  
-  4. Lint the Elixir code.  
-  `mix credo --strict`
-  
-  5. Run the dialyzer.  
-  `mix dialyzer --halt-exit-status`
-  
-  6. Check the Elixir code for vulnerabilities.  
-  `cd apps/explorer && mix sobelow --config; cd -`  
-  `cd apps/explorer_web && mix sobelow --config; cd -`
-
-  7. Lint the JavaScript code.  
-  `cd apps/explorer_web/assets && npm run eslint; cd -`
-
-
-### API Documentation
-
-To view Modules and API Reference documentation:
-
-1. `mix docs` generates documentation
-2. `open doc/index.html` to view
-
-
-## Internationalization
-
-The app is currently internationalized. It is only localized to U.S. English.
-
-To translate new strings, run `cd apps/explorer_web; mix gettext.extract --merge` and edit the new strings in `apps/explorer_web/priv/gettext/en/LC_MESSAGES/default.po`.
-
-## Acknowledgements
-
-We would like to thank the [EthPrize foundation](http://ethprize.io/) for their funding support.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and pull request protocol. We expect contributors to follow our [code of conduct](CODE_OF_CONDUCT.md) when submitting code or comments.
-
-
-## License
-
-[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
-
-This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+ * After _f + 1_ nodes have sent us their coin shares, we receive the coin output and assign it
+ to `s`.

@@ -1,23 +1,30 @@
-# A Cryptographic Common Coin
+## Contributing
 
-The Common Coin produces a pseudorandom binary value that the correct nodes agree on, and that\
-cannot be known beforehand.
+Thank your for contributing to this project! We welcome collaborators and expect users to follow our [code of conduct](CODE_OF_CONDUCT.md) when submitting code or comments.
 
-Every Common Coin instance has a _nonce_ that determines the value, without giving it away: It
-is not feasible to compute the output from the nonce alone, and for any "natural" sequence of
-nonces (that can be feasibly computed), the output is uniformly distributed.
-TODO: Bold claims! How much can we actually prove about that?
 
-The nodes input a signal (no data, just `()`), and after _2 f + 1_ nodes have provided input,
-everyone receives the output value. In particular, the adversary cannot know the output value
-before at least one correct node has provided input.
+1. Fork the repo ( https://github.com/poanetwork/hbbft/fork ).
+2. Create your feature branch (`git checkout -b my-new-feature`).
+3. Make sure you are running the same Rust, Clippy, and Rustfmt versions referenced in the [travis.yml file](https://github.com/poanetwork/hbbft/blob/master/.travis.yml.
+4. Run the tests, we only accept pull requests with passing tests so it's good to start with a clean slate. `cargo test --release`.
+5. Write tests that cover your work.
+6. Before committing changes, ensure the CI rules are satisfied, in particular, formatting is correct and all CI tests pass.
+7. Commit your changes (`git commit -am 'Add some feature'`).
+8. Push to your branch (`git push origin my-new-feature`).
+9. Create a new Pull Request.
 
-## How it works
+### General
 
-The algorithm uses a threshold signature scheme with the uniqueness property: For each public
-key and message, there is exactly one valid signature. This signature can be produced using
-signatures shares from any _2 f + 1_ holders of secret key shares.
+* Commits should be one logical change that still allows all tests to pass.  We prefer smaller commits if there could be two levels of logic grouping.  The goal is to provide future contributors (including your future self) the reasoning behind your changes and allow them to cherry-pick, patch or port those changes in isolation to other branches or forks.
+* If during your PR you reveal a pre-existing bug:
+  1. Try to isolate the bug and fix it on an independent branch and PR it first.
+  2. Try to fix the bug in a separate commit from other changes:
+     1. Commit the code in the broken state that revealed the bug originally
+     2. Commit the fix for the bug.
+     3. Continue original PR work.
 
-* On input, a node signs the nonce and sends its signature share to everyone else.
-* When a node has received _2 f + 1_ shares, it computes the main signature and outputs the XOR
-of its bits.
+### Pull Requests
+All pull requests should include: 
+* A clear, readable description of the purpose of the PR
+* A clear, readable description of changes
+* Any additional concerns or comments (optional)

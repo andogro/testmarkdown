@@ -5,13 +5,12 @@ Thank your for contributing to this project! We welcome collaborators and expect
 
 1. Fork the repo ( https://github.com/poanetwork/hbbft/fork ).
 2. Create your feature branch (`git checkout -b my-new-feature`).
-3. Make sure you are running the same Rust, Clippy, and Rustfmt versions referenced in the [travis.yml file](https://github.com/poanetwork/hbbft/blob/master/.travis.yml.
+3. Make sure you are running the same Rust, Clippy, and Rustfmt versions referenced in the [travis.yml file](https://github.com/poanetwork/hbbft/blob/master/.travis.yml).
 4. Run the tests, we only accept pull requests with passing tests so it's good to start with a clean slate. `cargo test --release`.
-5. Write tests that cover your work.
-6. Before committing changes, ensure the CI rules are satisfied, in particular, formatting is correct and all CI tests pass.
-7. Commit your changes (`git commit -am 'Add some feature'`).
-8. Push to your branch (`git push origin my-new-feature`).
-9. Create a new Pull Request.
+5. Write tests that cover your work and ensure the CI rules are satisfied, in particular, formatting is correct and all CI tests pass.
+6. Commit your changes (`git commit -am 'Add some feature'`).
+7. Push to your branch (`git push origin my-new-feature`).
+8. Create a new Pull Request.
 
 ### General
 

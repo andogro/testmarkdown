@@ -71,12 +71,12 @@ $ cargo run --example simulation --release
 
 |  Heading    | Definition                       
 | ----------- | -------------------------------------------------------------------------- | 
-| Epoch       | Number of the processing round. In each epoch, transactions are processed in a batch by a number of simulated nodes (default is 10) on a network.                                                            | 
-| Min/ Time   | Timestamp on the _first_ Tx (transaction) processed in a batch of transactions                                         |  
+| Epoch       | Number of the processing round. In each Epoch, transactions are processed in a batch by a number of simulated nodes (default is 10) on a network.                                                            | 
+| Min/ Time   | Timestamp on the _first_ Tx (transaction) processed in a batch of transactions.                                         |  
 | /Max Time   | Timestamp on the _last_ TX in a batch.                                                  |  
 | Txs         | Number of transactions processed in the Epoch.                                           |  
-| Msgs/Node   | Average number of messages handled by a node. This is additive for each each epoch, including messages handled in the current epoch as well as all previous epochs.                                                               |  
-| Size/Node   | The average message size (in kilobytes) handled by a node in each epoch. This is cumulative and includes message size for the current epoch and all previous epochs.                                                             |  
+| Msgs/Node   | Average number of messages handled by a node in each Epoch. This is cumulative and includes the number of messages handled in the current Epoch and all previous Epochs.                                                               |  
+| Size/Node   | Average message size (in kilobytes) handled by a node in each Epoch. This is cumulative and includes message size for the current epoch and all previous epochs.                                                             |  
  
 
 #### Options

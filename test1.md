@@ -1,64 +1,168 @@
-# Binary Byzantine agreement protocol
+# Honey Badger Byzantine Fault Tolerant (BFT) consensus algorithm
 
-The Binary Agreement protocol allows each node to input one binary (`bool`) value, and will
-output a binary value. The output is guaranteed to have been input by at least one correct
-node, and all correct nodes will have the same output.
+[![Build Status](https://travis-ci.com/poanetwork/hbbft.svg?branch=master)](https://travis-ci.com/poanetwork/hbbft) 
+[![Gitter](https://badges.gitter.im/poanetwork/hbbft.svg)](https://gitter.im/poanetwork/hbbft?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-## How it works
+Welcome to a [Rust](https://www.rust-lang.org/en-US/) library of the Honey Badger Byzantine Fault Tolerant (BFT) consensus algorithm. The research and protocols for this algorithm are explained in detail in "[The Honey Badger of BFT Protocols](https://eprint.iacr.org/2016/199.pdf)" by Miller et al., 2016.
 
-The algorithm proceeds in _epochs_, and the number of epochs it takes until it terminates is
-unbounded in theory but has a finite expected value. Each node keeps track of an _estimate_
-value `e`, which is initialized to the node's own input. Let's call a value `v`
-that has been input by at least one correct node and such that `!v` hasn't been _output_ by any
-correct node yet, a _viable output_. The estimate will always be a viable output.
+Following is an overview of HoneyBadger BFT and [basic instructions for getting started](#getting-started). 
 
-All messages are annotated with the epoch they belong to, but we omit that here for brevity.
+_**Note:** This library is a work in progress and parts of the algorithm are still in development._
 
-* At the beginning of each epoch, we multicast `BVal(e)`. It translates to: "I know that `e` is
-a viable output."
+## What is Honey Badger?
+The Honey Badger consensus algorithm allows nodes in a distributed, potentially asynchronous environment to achieve agreement on transactions. The agreement process does not require a leader node, tolerates corrupted nodes, and makes progress in adverse network conditions. Example use cases are decentralized databases and blockchains.
 
-* Once we receive `BVal(v)` with the same value from _f + 1_ different validators, we know that
-  at least one of them must be correct. So we know that `v` is a viable output. If we haven't
-  done so already we multicast `BVal(v)`. (Even if we already multicast `BVal(!v)`).
+Honey Badger is **Byzantine Fault Tolerant**. The protocol can reach consensus with a number of failed nodes f (including complete takeover by an attacker), as long as the total number N of nodes is greater than 3 * f.
 
-* Let's say a node _believes in `v`_ if it received `BVal(v)` from _2 f + 1_ validators.
-For the _first_ value `v` we believe in, we multicast `Aux(v)`. It translates to:
-"I know that all correct nodes will eventually know that `v` is a viable output.
-I'm not sure about `!v` yet."
+Honey Badger is **asynchronous**.  It does not make timing assumptions about message delivery. An adversary can control network scheduling and delay messages without impacting consensus.
 
-  * Since every node will receive at least _2 f + 1_ `BVal` messages from correct validators,
-  there is at least one value `v`, such that every node receives _f + 1_ `BVal(v)` messages.
-  As a consequence, every correct validator will multicast `BVal(v)` itself. Hence we are
-  guaranteed to receive _2 f + 1_ `BVal(v)` messages.
-  In short: If _any_ correct node believes in `v`, _every_ correct node will.
+## How does it work?
+Honey Badger is a modular library composed of several independent algorithms.  To reach consensus, Honey Badger proceeds in epochs. In each epoch, participating nodes broadcast a set of encrypted data transactions to one another and agree on the contents of those transactions. 
 
-  * Every correct node will eventually send exactly one `Aux`, so we will receive at least
-  _2 f + 1_ `Aux` messages with values we believe in. At that point, we define the set `vals`
-  of _candidate values_: the set of values we believe in _and_ have received in an `Aux`.
+In an optimal networking environment, output includes data sent from each node. In an adverse environment, the output is an agreed upon subset of data. Either way, the resulting output contains a batch of transactions which is guaranteed to be consistent across all nodes.  
 
-* Once we have the set of candidate values, we obtain a _coin value_ `s` (see below).
+In addition to **validators**, the algorithms support **observers**: These don't actively participate, and don't need to be trusted, but they receive the output as well, and are able to verify it under the assumption that more than two thirds of the validators are correct.
 
-  * If there is only a single candidate value `b`, we set our estimate `e = b`. If `s == b`,
-  we _output_ and send a `Term(b)` message which is interpreted as `BVal(b)` and `Aux(b)` for
-  all future epochs. If `s != b`, we just proceed to the next epoch.
+## Algorithms
 
-  * If both values are candidates, we set `e = s` and proceed to the next epoch.
+- [x] **[Honey Badger](https://github.com/poanetwork/hbbft/blob/master/src/honey_badger.rs):** Each node inputs transactions. The protocol outputs a sequence of batches of transactions.
 
-In epochs that are 0 modulo 3, the value `s` is `true`. In 1 modulo 3, it is `false`. In the
-case 2 modulo 3, we flip a common coin to determine a pseudorandom `s`.
+- [ ] **[Dynamic Honey Badger](https://github.com/poanetwork/hbbft/blob/master/src/dynamic_honey_badger.rs):** A modified Honey Badger where nodes can dynamically add and remove other nodes to/from the network.
 
-An adversary that knows each coin value, controls a few validators and controls network
-scheduling can delay the delivery of `Aux` and `BVal` messages to influence which candidate
-values the nodes will end up with. In some circumstances that allows them to stall the network.
-This is even true if the coin is flipped too early: the adversary must not learn about the coin
-value early enough to delay enough `Aux` messages. That's why in the third case, the value `s`
-is determined as follows:
+- [x] **[Subset](https://github.com/poanetwork/hbbft/blob/master/src/common_subset.rs):** Each node inputs data. The nodes agree on a subset of suggested data. 
 
-* We multicast a `Conf` message containing our candidate values.
+- [x] **[Broadcast](https://github.com/poanetwork/hbbft/blob/master/src/broadcast.rs):** A proposer node inputs data and every node receives this output.
 
-* Since every good node believes in all values it puts into its `Conf` message, we will
-eventually receive _2 f + 1_ `Conf` messages containing only values we believe in. Then we
-trigger the common coin.
+- [x] **[Binary Agreement](https://github.com/poanetwork/hbbft/blob/master/src/agreement/mod.rs):** Each node inputs a binary value. The nodes agree on a value that was input by at least one correct node. 
 
-* After _f + 1_ nodes have sent us their coin shares, we receive the coin output and assign it
-to `s`.
+- [x] **[Coin](https://github.com/poanetwork/hbbft/blob/master/src/common_coin.rs):** A pseudorandom binary value used by the Binary Agreement protocol.
+
+- [x] **[Synchronous Key Generation](https://github.com/poanetwork/hbbft/blob/master/src/sync_key_gen.rs)** A dealerless algorithm that generates keys for threshold encryption and signing. Unlike the other algorithms, this one is _completely synchronous_ and should run on top of Honey Badger (or another consensus algorithm)
+
+## Getting Started
+
+This library requires a distributed network environment to function. Details on network requirements TBD. 
+
+_**Note:** Additional examples are currently in progress._
+
+### Build
+
+Requires `rust` and `cargo`: [installation instructions.](https://www.rust-lang.org/en-US/install.html)
+
+```
+$ cargo build [--release]
+```
+
+### Test
+
+```
+$ cargo test --release
+```
+
+### Example Network Simulation
+
+A basic [example](https://github.com/poanetwork/hbbft/blob/master/examples/README.md) is included to run a network simulation.
+
+```
+$ cargo run --example simulation --release
+```
+
+![Screenshot](screenshot.png)
+
+|  Heading    | Definition                       
+| ----------- | -------------------------------------------------------------------------- | 
+| Epoch       | Number of the processing round. In each epoch, transactions are processed in a batch by a number of simulated nodes (default is 10) on a network.                                                            | 
+| Min/ Time   | Timestamp on the _first_ Tx (transaction) processed in a batch of transactions                                         |  
+| /Max Time   | Timestamp on the _last_ TX in a batch.                                                  |  
+| Txs         | Number of transactions processed in the Epoch.                                           |  
+| Msgs/Node   | Average number of messages handled by a node. This is additive for each each epoch, including messages handled in the current epoch as well as all previous epochs.                                                               |  
+| Size/Node   | The average message size (in kilobytes) handled by a node in each epoch. This is cumulative and includes message size for the current epoch and all previous epochs.                                                             |  
+ 
+
+#### Options
+
+Set different parameters to simulate different transaction and network conditions.
+
+|  Flag                  | Description                         | 
+| ---------------------- | -------------------------------- | 
+| `-h, --help`            | Show help options                   | 
+| `--version`             | Show the version of hbbft |  
+| `-n <n>, --nodes <n>`   | The total number of nodes [default: 10]        |  
+| `-f <f>, --faulty <f>`  | The number of faulty nodes [default: 0]|  
+| `-t <txs>, --txs <txs>` | The number of transactions to process [default: 1000]                     |  
+| `-b <b>, --batch <b>`   | The batch size, i.e. txs per epoch [default: 100]                    |  
+|  `-l <lag>, --lag <lag>` | The network lag between sending and receiving [default: 100]                     |  
+|  `--bw <bw>`             | The bandwidth, in kbit/s [default: 2000]                    |  
+|  `--cpu <cpu>`           | The CPU speed, in percent of this machine's [default: 100]                     |  
+|  `--tx-size <size>`      | The size of a transaction, in bytes [default: 10]                     |  
+
+
+**Examples:**
+
+```bash
+# view options
+$ cargo run --example simulation --release -- -h
+
+# simulate a network with 12 nodes, 2 of which are faulty
+$ cargo run --example simulation --release -- -n 12 -f 2
+
+# increase batch size to 500 transactions per epoch
+$ cargo run --example simulation --release -- -b 500
+
+```
+
+
+## Current TODOs
+
+See [Issues](https://github.com/poanetwork/hbbft/issues) for all tasks.
+
+- [ ] Dynamic Honey Badger (adding and removing nodes in a live network environment) ([#47](https://github.com/poanetwork/hbbft/issues/47#issuecomment-394640406))
+- [ ] Create additional adversarial scenarios and tests
+- [ ] Networking example to detail Honey Badger implementation
+
+## Protocol Modifications
+
+Our implementation modifies the protocols described in "[The Honey Badger of BFT Protocols](https://eprint.iacr.org/2016/199.pdf)" in several ways:
+*  We use a [pairing elliptic curve library](https://github.com/ebfull/pairing) to implement pairing-based cryptography rather than Gap Diffie-Hellman groups. 
+* We add a `Terminate` message to the Binary Agreement algorithm. Termination occurs following output, preventing the algorithm from running (or staying in memory) indefinitely. ([#53](https://github.com/poanetwork/hbbft/issues/55))
+*  We add a `Conf` message to the Binary Agreement algorithm. An additional message phase prevents an attack if an adversary controls a network scheduler and a node. ([#37](https://github.com/poanetwork/hbbft/issues/37))
+*  We return additional information from the Subset and Honey Badger algorithms that specifies which node input which data. This allows for identification of potentially malicious nodes.
+* We include a Distributed Key Generation (DKG) protocol which does not require a trusted dealer; nodes collectively generate a secret key. This addresses the problem of single point of failure. See [Distributed Key Generation in the Wild](https://eprint.iacr.org/2012/377.pdf).
+
+### Algorithm naming conventions  
+
+We have simplified algorithm naming conventions from the original paper.
+
+|  Algorithm Name  | Original Name                    | 
+| ---------------- | -------------------------------- | 
+| Honey Badger     | HoneyBadgerBFT                   | 
+| Subset           | Asynchronous Common Subset (ACS) |  
+| Broadcast        | Reliable Broadcast (RBC)         |  
+| Binary Agreement | Binary Byzantine Agreement (BBA) |  
+| Coin             | Common Coin                      |  
+
+## Contributing
+
+See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
+
+## License
+
+[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+
+This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
+## References
+
+* [The Honey Badger of BFT Protocols](https://eprint.iacr.org/2016/199.pdf)
+
+* [Honey Badger Video](https://www.youtube.com/watch?v=Qone4j1hCt8)
+
+* Other language implementations
+
+  * [Python](https://github.com/amiller/HoneyBadgerBFT)
+
+  * [Go](https://github.com/anthdm/hbbft)
+
+  * [Erlang](https://github.com/helium/erlang-hbbft)
+
+  * [Rust](https://github.com/rphmeier/honeybadger) - unfinished implementation

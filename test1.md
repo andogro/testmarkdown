@@ -16,8 +16,9 @@ Thank your for contributing to this project! We welcome collaborators and expect
 * Commits should be one logical change that still allows all tests to pass.  We prefer smaller commits if there could be two levels of logic grouping.  The goal is to provide future contributors (including your future self) the reasoning behind your changes and allow them to cherry-pick, patch or port those changes in isolation to other branches or forks.
 * If during your PR you reveal a pre-existing bug and know how to fix:
   1. If you can isolate the bug, fix in a separate PR.
-  2. If the fix depends on your other commits, add the fix in a separate commit to the same PR.
-In either case, try to write a regression test that would fail because of the bug, but passes with your fix.
+  2. If the fix depends on your other commits, add the fix in a separate commit to the same PR.  
+
+    In either case, try to write a regression test that would fail because of the bug, but passes with your fix.
 
 
 ### Issues

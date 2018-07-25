@@ -8,7 +8,6 @@ In the current Ethereum ecosystem, a majority of active nodes on the network are
 
 Mana is currently in development.
 
-
 # Dependencies
 
  * Elixir ~> 1.6.5
@@ -33,9 +32,9 @@ Currently, peer-to-peer communication is incomplete, but if you would like
 to partially sync blocks, you can use an experimental script to sync with
 `Infura`:
 
-## Running `sync_with_infura`
+## Running the sync_with_infura script
 
-`sync_with_infura` pulls blocks from the nodes hosted by
+`sync_with_infura` pulls blocks from nodes hosted by
 [Infura.io](https://infura.io/). You will need an Infura API key to run.
 
 1. Sign up with [Infura](https://infura.io/register).
@@ -43,12 +42,12 @@ to partially sync blocks, you can use an experimental script to sync with
 3. Copy your project API KEY.
 4. Paste your key into the dev.secret file for the blockchain app.
     1. Go to apps/blockchain/config/dev.secret.exs
-    2. Paste your key to replace <your api key here> 
+    2. Paste your key to replace `<your api key here>` in the url string.
     ```Use Mix.Config
        config :ethereumex, url: "https://mainnet.infura.io/<your api key here>
      ```
 5. Save the file and return to the mana home directory.
-6. Run the script.
+6. Run the script.  
 `mix run apps/blockchain/scripts/sync_with_infura.ex`
 
 If running properly, you will see a timestamp in hr/min/sec/millisec and a running list of Verified Blocks.
@@ -78,13 +77,13 @@ cd apps/blockchain && mix test test/blockchain/state_test.exs
 cd apps/blockchain && mix test test/blockchain/transaction_test.exs
 ```
 
-
 # Documentation
 To view module and reference documentation:
 
-Generate documentation.
+1. Generate documentation.  
 `mix docs`
-View the generated docs.
+
+2. View the generated docs.  
 `open doc/index.html`
 
 
@@ -99,11 +98,11 @@ This project is licensed under the GNU Lesser General Public License v3.0. See t
 
 See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
 
-
 # References
 
 * [Ethereum yellow paper](https://ethereum.github.io/yellowpaper/paper.pdf)(ETHEREUM: A SECURE DECENTRALISED GENERALISED TRANSACTION LEDGER
 BYZANTIUM VERSION )
+
 * [Message Calls in Ethereum](http://www.badykov.com/ethereum/2018/06/17/message-calls-in-ethereum/)
 
 Other Implementations

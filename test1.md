@@ -132,8 +132,7 @@ See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and p
 
 # References
 
-* [Ethereum yellow paper](https://ethereum.github.io/yellowpaper/paper.pdf)(ETHEREUM: A SECURE DECENTRALISED GENERALISED TRANSACTION LEDGER
-BYZANTIUM VERSION )
+* [Ethereum yellow paper](https://ethereum.github.io/yellowpaper/paper.pdf)(Ethereum: A Secure Decentralised Generalised Transaction Ledger Byzantium Version)
 
 * [Message Calls in Ethereum](http://www.badykov.com/ethereum/2018/06/17/message-calls-in-ethereum/)
 

@@ -8,6 +8,8 @@
 title:              Honey Badger Documentation
 description:        User Documentation for hbbft consensus protocol
 
+github_editme_path: andogro/testmarkdown/blob/gh-pages/
+
 # Site subpath, e.g. /blog
 baseurl:            ""
 

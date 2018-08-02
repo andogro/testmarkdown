@@ -11,13 +11,13 @@ description:        User Documentation for hbbft consensus protocol
 github_editme_path: andogro/testmarkdown/blob/gh-pages/
 
 # Site subpath, e.g. /blog
-baseurl:            ""
+baseurl:            "/testmarkdown"
 
 # Permalink URLs structure, for permalink style options see: https://jekyllrb.com/docs/permalinks/
 permalink:          /:title/
 
 # Site base hostname & protocol, e.g. http://example.com
-url:                "https://andogro.github.io/testmarkdown"
+url:                "https://andogro.github.io"
 
 # Site logo, image or text
 brand:

@@ -1,4 +1,4 @@
-Reference from Mastering Blockchain/Wiki/personal interpretation
+https://ethereum.stackexchange.com/questions/6022/algebra-symbology-guidance-for-ethereum-yellow-paper
 
 |  **Symbol** | **Description** |
 |  ------ | ------ |

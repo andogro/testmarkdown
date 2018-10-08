@@ -46,9 +46,13 @@ The POA bridge currently provides two operational modes, with a 3rd mode in deve
 
 ## Architecture
 
+### Native-to-ERC
+
 ![Native-to-ERC](Native-to-ERC.png)
 
-![ERC-to-ERC](Native-to-ERC.png)
+### ERC-to-ERC
+
+![ERC-to-ERC](ERC-to-ERC.png)
 
 
 ### Watcher
@@ -208,9 +212,9 @@ When running the processes, the following commands can be used to test functiona
 
 - To send deposits to a home contract run `node scripts/sendUserTxToHome.js`
 
- - To send withdrawals to a foreign contract run `node scripts/sendUserTxToForeign.js`
+- To send withdrawals to a foreign contract run `node scripts/sendUserTxToForeign.js`
 
-Make sure your `HOME_MIN_AMOUNT_PER_TX` and `FOREIGN_MIN_AMOUNT_PER_TX` is the same as in your .env deployment contract.
+Confirm the `HOME_MIN_AMOUNT_PER_TX` and `FOREIGN_MIN_AMOUNT_PER_TX` is the same as in the .env deployment contract.
 
 ### ERC-to-ERC-Mode Testing
 

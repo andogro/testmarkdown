@@ -86,8 +86,9 @@ For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues
 
 2. Start Redis and RabbitMQ in your local environment.
     1. **Docker**: Start RabbitMQ and Redis: `docker-compose up -d` 
-       1. ** Manual Start**: `redis-server` starts Redis. `redis-cli ping` will return a `pong` if Redis is running.
-       2. `rabbitmq-server` starts RabbitMQ. Use `rabbitmqctl status` to check if RabbitMQ is running. 
+    1. ** Manual Start**:
+      `redis-server` starts Redis. `redis-cli ping` will return a `pong` if Redis is running.
+      `rabbitmq-server` starts RabbitMQ. Use `rabbitmqctl status` to check if RabbitMQ is running. 
 
 3. Create a `.env` file: `cp .env.example .env`
    1. fill in the required information using the output data from the bridge contract deployment in step 1. Check the `.env.example` file to see the required variables.

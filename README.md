@@ -86,9 +86,9 @@ For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues
 
 2. Start Redis and RabbitMQ in your local environment.
     1. **Docker**: Start RabbitMQ and Redis: `docker-compose up -d` 
-    1. ** Manual Start**:
-      `redis-server` starts Redis. `redis-cli ping` will return a `pong` if Redis is running.
-      `rabbitmq-server` starts RabbitMQ. Use `rabbitmqctl status` to check if RabbitMQ is running. 
+    2. **Manual Start**:  
+    `redis-server` starts Redis. `redis-cli ping` will return a `pong` if Redis is running.  
+    `rabbitmq-server` starts RabbitMQ. Use `rabbitmqctl status` to check if RabbitMQ is running. 
 
 3. Create a `.env` file: `cp .env.example .env`
    1. fill in the required information using the output data from the bridge contract deployment in step 1. Check the `.env.example` file to see the required variables.
@@ -96,10 +96,8 @@ For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues
 
 ## Run the Processes
 
-To use with the optional Bridge UI, see the [installation instructions](https://github.com/poanetwork/bridge-ui/). 
-
-- **Native-to-ERC**: In the `.env` file `BRIDGE_MODE=NATIVE_TO_ERC`
-- **ERC-to-ERC mode**: In `.env` file set `BRIDGE_MODE=ERC_TO_ERC`
+- **Native-to-ERC**: In the `.env` file set `BRIDGE_MODE=NATIVE_TO_ERC`
+- **ERC-to-ERC mode**: In the `.env` file set `BRIDGE_MODE=ERC_TO_ERC`
 
 
 ### RabbitMQ / Redis
@@ -119,6 +117,10 @@ To use with the optional Bridge UI, see the [installation instructions](https://
   - `docker-compose run bridge npm run watcher:affirmation-request`
   - `docker-compose run bridge npm run sender:home`
   - `docker-compose run bridge npm run sender:foreign`
+
+### Bridge UI
+
+See the [Bridge UI installation instructions](https://github.com/poanetwork/bridge-ui/) to configure and use the optional Bridge UI.
 
 
 ### Useful Commands for Development

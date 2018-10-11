@@ -15,7 +15,7 @@ For a complete picture of the POA Bridge functionality, it is useful to explore 
 
 **Bridge Elements**
 1. Bridge UI Application. A DApp interface to transfer tokens and coins between chains, located in this repository.
-2. [Solidity smart contracts](https://github.com/poanetwork/poa-bridge-contracts). Used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
+2. [Bridge Smart Contracts](https://github.com/poanetwork/poa-bridge-contracts). Solidity contracts used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
 3. [Bridge Oracle](https://github.com/poanetwork/token-bridge). An oracle written in NodeJS.
 4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
 5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments and allows you to deploy separate bridge instances for validators.
@@ -53,7 +53,7 @@ Resources that describe various versions of the bridge. Some may be outdated, bu
 - [Deployed URL for POA -> Ethereum Network Bridge](https://bridge.poa.net/)
 - [Testnet Bridge URL](https://bridge-testnet.poa.net/)
 - [Bridge UI Tutorial Videos](https://www.youtube.com/playlist?list=PLS5SEs8ZftgUqR3hVFiEXQLqE9QI8sIGz)
-- [Article on the POA Bridge]((https://medium.com/poa-network/cross-chain-bridges-paving-the-way-to-internet-of-blockchains-422ac94bc2e5)
+- [Article on the POA Bridge](https://medium.com/poa-network/cross-chain-bridges-paving-the-way-to-internet-of-blockchains-422ac94bc2e5)
 
 
 ## Getting Started
@@ -66,6 +66,8 @@ The following is an example setup using the POA Sokol testnet as the Home networ
 - [token-bridge](https://github.com/poanetwork/token-bridge)
 - [node.js](https://nodejs.org/en/download/)
 - [Nifty Wallet](https://chrome.google.com/webstore/detail/nifty-wallet/jbdaocneiiinmjbjlgalhcelgbejmnid?hl=en) or [MetaMask](https://metamask.io/)
+
+### Setup
 
 1. Create an empty folder where you will be setting up your bridge. In this example we call it `sokol-kovan-bridge`.
 `mkdir sokol-kovan-bridge && cd sokol-kovan-bridge`  
@@ -108,14 +110,14 @@ If successful, you will see bridge processes run when you issue a command. For e
 [1539195011467] INFO (watcher-signature-request): Found 0 UserRequestForSignature events
 ```
 
-6. Keep the bridge processes running. Open a separate terminal window and go to the `sokol-kovan-bridge` folder
+6. Keep the bridge processes running. Open a separate terminal window and go to the `sokol-kovan-bridge` folder to install and unpack this repository.
 
-  1. `git clone https://github.com/poanetwork/bridge-ui.git`  
-  2. `cd bridge-ui`  
-  3. `npm install`  
-  4. Create a .env file from the example file[.env.example](.env.example)  
+  *  `git clone https://github.com/poanetwork/bridge-ui.git`  
+  * `cd bridge-ui`  
+  * `npm install`  
+  * Create a .env file from the example file[.env.example](.env.example)  
 `cp .env.example .env`  
-  5. Insert addresses from the bridgeDeploymentResults.json file into the .env file.
+  * Insert addresses from the bridgeDeploymentResults.json file into the .env file.
 `cat ../poa-bridge-contracts/deploy/bridgeDeploymentResults.json`  
 
 ```bash
@@ -126,9 +128,9 @@ REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network //http public RPC node 
 REACT_APP_GAS_PRICE_SPEED_TYPE=fast // Gas price speed option (slow, standard, fast, instant)
 ```
 
-  6. Run `npm run start`
-  7. Make sure you have a web3 wallet installed (Nifty Wallet or MetaMask) and connected to the POA Sokol Network. Check that you are connected the funded account from step 2 in the web3 wallet
-  9. Specify an amount and click Transfer to make a cross chain transaction from Sokol to Kovan
+  * Run `npm run start`
+  * Make sure you have a web3 wallet installed (Nifty Wallet or MetaMask) and connected to the POA Sokol Network. Check that you are connected the funded account from step 2 in the web3 wallet
+  * Specify an amount and click Transfer to make a cross chain transaction from Sokol to Kovan
 
 ## Testing
 

@@ -128,7 +128,6 @@ If successful, you will see bridge processes run when you issue a command. For e
 {"level":30,"time":1539366885587,"msg":"Found 0 UserRequestForSignature events","validator":"0xC9f74f16F3743f4370c66DdA728D1751BCBa2616","name":"watcher-signature-request","v":1}
 ```
 
-
 6. Keep the bridge processes running. Open a separate terminal window and go to the `sokol-kovan-bridge` folder to install and unpack this repository.
 
     * `git clone https://github.com/poanetwork/bridge-ui.git`  
@@ -142,23 +141,21 @@ If successful, you will see bridge processes run when you issue a command. For e
     * Insert the addresses from the bridgeDeploymentResults.json file into the .env file.
 `cat ../poa-bridge-contracts/deploy/bridgeDeploymentResults.json`  
 
-
-    ```bash
-    # HomeBridge address in bridgeDeploymentResults.json
-    REACT_APP_HOME_BRIDGE_ADDRESS=0x.. 
-    # ForeignBridge address in bridgeDeploymentResults.json
-    REACT_APP_FOREIGN_BRIDGE_ADDRESS=0x..
-    # https public RPC node for Foreign network
-    REACT_APP_FOREIGN_HTTP_PARITY_URL=https://kovan.infura.io/mew
-    # public RPC node for Home network 
-    REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network 
-    # Gas price speed option (slow, standard, fast, instant)
-    REACT_APP_GAS_PRICE_SPEED_TYPE=fast
-    ```
-
+```bash
+# HomeBridge address in bridgeDeploymentResults.json
+  REACT_APP_HOME_BRIDGE_ADDRESS=0x.. 
+  # ForeignBridge address in bridgeDeploymentResults.json
+  REACT_APP_FOREIGN_BRIDGE_ADDRESS=0x..
+  # https public RPC node for Foreign network
+  REACT_APP_FOREIGN_HTTP_PARITY_URL=https://kovan.infura.io/mew
+  # public RPC node for Home network 
+  REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network 
+  # Gas price speed option (slow, standard, fast, instant)
+  REACT_APP_GAS_PRICE_SPEED_TYPE=fast
+ ```
     * Run `npm run start`
     * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)
-    * Specify an amount and click Transfer to make a cross chain transaction from Sokol to Kovan
+    * Specify an amount and click `Transfer` to complete a cross-chain transaction from Sokol to Kovan
 
 ## Testing
 

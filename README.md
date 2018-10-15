@@ -17,7 +17,6 @@ For a complete picture of the POA Bridge functionality, it is useful to explore 
 3. [Token Bridge](https://github.com/poanetwork/token-bridge). The token bridge oracle written in NodeJS.
 4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
 5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments and allows you to deploy separate bridge instances for validators.
-6. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor).
 
 ## Bridge UI Application
 
@@ -78,7 +77,7 @@ The following is an example setup using the POA Sokol testnet as the Home networ
 
 ### Example Setup
 
-1. Create an empty folder where you will be setting up your bridge. In this example we call it `sokol-kovan-bridge`.
+1. Create an empty folder for setting up your bridge. In this example we call it `sokol-kovan-bridge`.
 `mkdir sokol-kovan-bridge && cd sokol-kovan-bridge`  
 
 2. Prepare temporary ETH address(es) for deployment by creating new account(s) in Nifty Wallet or MetaMask. See the [wallet resources](#resources) if you need more information on this step.  
@@ -87,14 +86,13 @@ The following is an example setup using the POA Sokol testnet as the Home networ
     * Fund Home accounts (`Validators`) using the [POA Sokol Faucet](https://faucet-sokol.herokuapp.com/)
     * Get free Kovan Coins from the [gitter channel](https://gitter.im/kovan-testnet/faucet) or [Iracus faucet](https://github.com/kovan-testnet/faucet) for Foreign Accounts. Get 5 Keth to 1 acc, and transfer from it to all other wallets.
 
-
 4. Deploy the Sokol <-> Kovan Bridge contracts.
     * Go to the the `sokol-kovan-bridge` folder created in step 1 and `git clone https://github.com/poanetwork/poa-bridge-contracts`
     * Follow instructions in the [POA Bridge contracts repo](https://github.com/poanetwork/poa-bridge-contracts).
     * Set the parameters in the .env file.
       * `DEPLOYMENT_ACCOUNT_PRIVATE_KEY`: Export the private key from step 2
       * `HOME_RPC_URL`=https://sokol.poa.network
-      * Wallet address(es) of validators. For testing, you can use the same address for all address values in the file. This includes:
+      * Wallet address(es) for the validators. For testing, you can use the same address for all address values in the file. This includes:
         * `HOME_OWNER_MULTISIG`
         * `HOME_UPGRADEABLE_ADMIN_VALIDATORS`
         * `HOME_UPGRADEABLE_ADMIN_BRIDGE`
@@ -102,13 +100,13 @@ The following is an example setup using the POA Sokol testnet as the Home networ
         * `FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS`
         * `FOREIGN_UPGRADEABLE_ADMIN_BRIDGE`
       * FOREIGN_RPC_URL=https://kovan.infura.io/mew
-    * When deployment is finished, check that the `bridgeDeploymentResults.json` file exists in the `deploy` directory and includes the bridge contract addresses.  
+    * When deployment is finished, check that the `bridgeDeploymentResults.json` file exists in the `poa-bridge-contracts/deploy` directory and includes the bridge contract addresses.  
 
 5. Install and run the POA Token Bridge.
-    * Got to the `sokol-kovan-bridge` folder and  `git clone https://github.com/poanetwork/token-bridge`
+    * Got to the `sokol-kovan-bridge` folder and `git clone https://github.com/poanetwork/token-bridge`
     * Follow instructions in the [POA Token Bridge repo](https://github.com/poanetwork/token-bridge).
 
-If successful, you will see bridge processes run when you issue a command. For example run `npm run watcher:signature-request`
+If successful, you will see bridge processes run when you issue a command. For example, run `npm run watcher:signature-request`
 
 **Example NPM Output:**
 ```bash
@@ -152,9 +150,9 @@ If successful, you will see bridge processes run when you issue a command. For e
     # Gas price speed option (slow, standard, fast, instant)
     REACT_APP_GAS_PRICE_SPEED_TYPE=fast
 ```
-   * Run `npm run start`
-   * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)
-   * Specify an amount and click `Transfer` to complete a cross-chain transaction from Sokol to Kovan
+  * Run `npm run start`
+  * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)
+  * Specify an amount and click `Transfer` to complete a cross-chain transaction from Sokol to Kovan
 
 ## Testing
 

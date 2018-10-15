@@ -142,18 +142,18 @@ If successful, you will see bridge processes run when you issue a command. For e
     * Insert the addresses from the bridgeDeploymentResults.json file into the .env file.
 `cat ../poa-bridge-contracts/deploy/bridgeDeploymentResults.json`  
 
-```bash
-# HomeBridge address in bridgeDeploymentResults.json
-REACT_APP_HOME_BRIDGE_ADDRESS=0x.. 
-#ForeignBridge address in bridgeDeploymentResults.json
-REACT_APP_FOREIGN_BRIDGE_ADDRESS=0x..
-#https public RPC node for Foreign network
-REACT_APP_FOREIGN_HTTP_PARITY_URL=https://kovan.infura.io/mew
-#public RPC node for Home network 
-REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network 
-#// Gas price speed option (slow, standard, fast, instant)
-REACT_APP_GAS_PRICE_SPEED_TYPE=fast
-```
+    ```bash
+    # HomeBridge address in bridgeDeploymentResults.json
+    REACT_APP_HOME_BRIDGE_ADDRESS=0x.. 
+    # ForeignBridge address in bridgeDeploymentResults.json
+    REACT_APP_FOREIGN_BRIDGE_ADDRESS=0x..
+    # https public RPC node for Foreign network
+    REACT_APP_FOREIGN_HTTP_PARITY_URL=https://kovan.infura.io/mew
+    # public RPC node for Home network 
+    REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network 
+    # Gas price speed option (slow, standard, fast, instant)
+    REACT_APP_GAS_PRICE_SPEED_TYPE=fast
+    ```
 
     * Run `npm run start`
     * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)

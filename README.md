@@ -3,9 +3,7 @@
 [![Build Status](https://travis-ci.org/patitonar/bridge-ui.svg?branch=master)](https://travis-ci.org/patitonar/bridge-ui)
 [![Gitter](https://badges.gitter.im/poanetwork/poa-bridge.svg)](https://gitter.im/poanetwork/poa-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-
 Welcome to the POA Bridge! Following is an overview of the POA Bridge and Bridge UI Application, as well as [basic instructions for getting started](#getting-started).
-
 
 ## POA Bridge Overview
 
@@ -21,7 +19,6 @@ For a complete picture of the POA Bridge functionality, it is useful to explore 
 5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments and allows you to deploy separate bridge instances for validators.
 6. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor).
 
-
 ## Bridge UI Application
 
 The UI provides an intuitive interface for assets transfer between networks running the Bridge smart contracts. Users can connect to a web3 wallet such as [Nifty Wallet](https://chrome.google.com/webstore/detail/nifty-wallet/jbdaocneiiinmjbjlgalhcelgbejmnid?hl=en) or [MetaMask](https://metamask.io/) and complete the transfer through a web browser.
@@ -32,7 +29,6 @@ The current implementation allows for several bridge modes.
   2. `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B".
 
   ![Bridge UI](bridge-ui.png)
-
 
 ### UI Features
 - Shows daily limits in both networks
@@ -66,8 +62,8 @@ The same address is used to send a coin from the Home network and receive a toke
 - [Bridge UI Tutorial Videos](https://www.youtube.com/playlist?list=PLS5SEs8ZftgUqR3hVFiEXQLqE9QI8sIGz)
 - [Article on the POA Bridge](https://medium.com/poa-network/cross-chain-bridges-paving-the-way-to-internet-of-blockchains-422ac94bc2e5)
 - Wallet Resources
-  - MetaMask
-  - Nifty Wallet
+  - [MetaMask](https://consensys.zendesk.com/hc/en-us/categories/360001045692-Using-MetaMask)
+  - [Nifty Wallet](https://poanet.zendesk.com/hc/en-us/articles/360008957634-Nifty-Wallet)
 
 ## Getting Started
 
@@ -88,31 +84,29 @@ The following is an example setup using the POA Sokol testnet as the Home networ
 2. Prepare temporary ETH address(es) for deployment by creating new account(s) in Nifty Wallet or MetaMask. See the [wallet resources](#resources) if you need more information on this step.  
 
 3. Fund the test account(s).
-  * Fund Home accounts (`Validators`) using the [POA Sokol Faucet](https://faucet-sokol.herokuapp.com/)
-  * Get free Kovan Coins from the [gitter channel](https://gitter.im/kovan-testnet/faucet) or [Iracus faucet](https://github.com/kovan-testnet/faucet) for Foreign Accounts. Get 5 Keth to 1 acc, and transfer from it to all other wallets.
+    * Fund Home accounts (`Validators`) using the [POA Sokol Faucet](https://faucet-sokol.herokuapp.com/)
+    * Get free Kovan Coins from the [gitter channel](https://gitter.im/kovan-testnet/faucet) or [Iracus faucet](https://github.com/kovan-testnet/faucet) for Foreign Accounts. Get 5 Keth to 1 acc, and transfer from it to all other wallets.
 
 
 4. Deploy the Sokol <-> Kovan Bridge contracts.
-  * Go to the the `sokol-kovan-bridge` folder created in step 1 and `git clone https://github.com/poanetwork/poa-bridge-contracts`
-  * Follow instructions in the [POA Bridge contracts repo](https://github.com/poanetwork/poa-bridge-contracts).
-  * Set the parameters in the .env file.
-    * `DEPLOYMENT_ACCOUNT_PRIVATE_KEY`: Export the private key from step 2
-    * `HOME_RPC_URL`=https://sokol.poa.network
-    * Wallet address(es) of validators. For testing, you can use the same address for all address values in the file. This includes:
-      * `HOME_OWNER_MULTISIG`
-      * `HOME_UPGRADEABLE_ADMIN_VALIDATORS`
-      * `HOME_UPGRADEABLE_ADMIN_BRIDGE`
-      * `FOREIGN_OWNER_MULTISIG`
-      * `FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS`
-      * `FOREIGN_UPGRADEABLE_ADMIN_BRIDGE`
-    * FOREIGN_RPC_URL=https://kovan.infura.io/mew
-  * When deployment is finished, check that the `bridgeDeploymentResults.json` file exists in the `deploy` directory and includes the bridge contract addresses.  
-
-
+    * Go to the the `sokol-kovan-bridge` folder created in step 1 and `git clone https://github.com/poanetwork/poa-bridge-contracts`
+    * Follow instructions in the [POA Bridge contracts repo](https://github.com/poanetwork/poa-bridge-contracts).
+    * Set the parameters in the .env file.
+      * `DEPLOYMENT_ACCOUNT_PRIVATE_KEY`: Export the private key from step 2
+      * `HOME_RPC_URL`=https://sokol.poa.network
+      * Wallet address(es) of validators. For testing, you can use the same address for all address values in the file. This includes:
+        * `HOME_OWNER_MULTISIG`
+        * `HOME_UPGRADEABLE_ADMIN_VALIDATORS`
+        * `HOME_UPGRADEABLE_ADMIN_BRIDGE`
+        * `FOREIGN_OWNER_MULTISIG`
+        * `FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS`
+        * `FOREIGN_UPGRADEABLE_ADMIN_BRIDGE`
+      * FOREIGN_RPC_URL=https://kovan.infura.io/mew
+    * When deployment is finished, check that the `bridgeDeploymentResults.json` file exists in the `deploy` directory and includes the bridge contract addresses.  
 
 5. Install and run the POA Token Bridge.
-  * Got to the `sokol-kovan-bridge` folder and  `git clone https://github.com/poanetwork/token-bridge`
-  * Follow instructions in the [POA Token Bridge repo](https://github.com/poanetwork/token-bridge).
+    * Got to the `sokol-kovan-bridge` folder and  `git clone https://github.com/poanetwork/token-bridge`
+    * Follow instructions in the [POA Token Bridge repo](https://github.com/poanetwork/token-bridge).
 
 If successful, you will see bridge processes run when you issue a command. For example run `npm run watcher:signature-request`
 
@@ -137,15 +131,15 @@ If successful, you will see bridge processes run when you issue a command. For e
 
 6. Keep the bridge processes running. Open a separate terminal window and go to the `sokol-kovan-bridge` folder to install and unpack this repository.
 
-  *  `git clone https://github.com/poanetwork/bridge-ui.git`  
-  * `cd bridge-ui`
-  * Update submodules  
+    * `git clone https://github.com/poanetwork/bridge-ui.git`  
+    * `cd bridge-ui`
+    * Update submodules  
 `git submodule update --init --recursive --remote` 
-  * Install dependencies  
+    * Install dependencies  
 `npm install`  
-  * Create a .env file from the example file[.env.example](.env.example)  
+    * Create a .env file from the example file[.env.example](.env.example)  
 `cp .env.example .env`  
-  * Insert the addresses from the bridgeDeploymentResults.json file into the .env file.
+    * Insert the addresses from the bridgeDeploymentResults.json file into the .env file.
 `cat ../poa-bridge-contracts/deploy/bridgeDeploymentResults.json`  
 
 ```bash
@@ -161,9 +155,9 @@ REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network
 REACT_APP_GAS_PRICE_SPEED_TYPE=fast
 ```
 
-  * Run `npm run start`
-  * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)
-  * Specify an amount and click Transfer to make a cross chain transaction from Sokol to Kovan
+    * Run `npm run start`
+    * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)
+    * Specify an amount and click Transfer to make a cross chain transaction from Sokol to Kovan
 
 ## Testing
 

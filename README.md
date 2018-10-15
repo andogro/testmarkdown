@@ -142,6 +142,7 @@ If successful, you will see bridge processes run when you issue a command. For e
     * Insert the addresses from the bridgeDeploymentResults.json file into the .env file.
 `cat ../poa-bridge-contracts/deploy/bridgeDeploymentResults.json`  
 
+
     ```bash
     # HomeBridge address in bridgeDeploymentResults.json
     REACT_APP_HOME_BRIDGE_ADDRESS=0x.. 

@@ -80,7 +80,10 @@ The following is an example setup using the POA Sokol testnet as the Home networ
 1. Create an empty folder for setting up your bridge. In this example we call it `sokol-kovan-bridge`.
 `mkdir sokol-kovan-bridge && cd sokol-kovan-bridge`  
 
-2. Prepare temporary ETH address(es) for deployment by creating new account(s) in Nifty Wallet or MetaMask. See the [wallet resources](#resources) if you need more information on this step.  
+2. Prepare temporary ETH address(es) for deployment by creating new account(s) in Nifty Wallet or MetaMask. See the [wallet resources](#resources) if you need more information on this step. This account is used:
+    * for deploying bridge contracts to both networks
+    * as the bridge contracts management wallet
+    * as the validator's wallet address
 
 3. Fund the test account(s).
     * Fund Home accounts (`Validators`) using the [POA Sokol Faucet](https://faucet-sokol.herokuapp.com/)
@@ -92,13 +95,14 @@ The following is an example setup using the POA Sokol testnet as the Home networ
     * Set the parameters in the .env file.
       * `DEPLOYMENT_ACCOUNT_PRIVATE_KEY`: Export the private key from step 2
       * `HOME_RPC_URL`=https://sokol.poa.network
-      * Wallet address(es) for the validators. For testing, you can use the same address for all address values in the file. This includes:
+      * Wallet address(es) for bridge contracts management. For testing, you can use the same address for all address values in the file. This includes:
         * `HOME_OWNER_MULTISIG`
         * `HOME_UPGRADEABLE_ADMIN_VALIDATORS`
         * `HOME_UPGRADEABLE_ADMIN_BRIDGE`
         * `FOREIGN_OWNER_MULTISIG`
         * `FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS`
         * `FOREIGN_UPGRADEABLE_ADMIN_BRIDGE`
+        * `VALIDATORS`
       * FOREIGN_RPC_URL=https://kovan.infura.io/mew
     * When deployment is finished, check that the `bridgeDeploymentResults.json` file exists in the `poa-bridge-contracts/deploy` directory and includes the bridge contract addresses.  
 

@@ -1,170 +1,280 @@
-# POA Bridge - User Interface (UI) Application
 
-[![Build Status](https://travis-ci.org/patitonar/bridge-ui.svg?branch=master)](https://travis-ci.org/patitonar/bridge-ui)
+# POA Bridge - NodeJS Oracle
+
+[![Build Status](https://travis-ci.org/poanetwork/bridge-nodejs.svg?branch=develop)](https://travis-ci.org/poanetwork/bridge-nodejs)
 [![Gitter](https://badges.gitter.im/poanetwork/poa-bridge.svg)](https://gitter.im/poanetwork/poa-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Welcome to the POA Bridge! Following is an overview of the POA Bridge and Bridge UI Application, as well as [basic instructions for getting started](#getting-started).
+## Bridge Overview
 
-## POA Bridge Overview
-
-The POA Bridge allows users to transfer assets between two chains in the Ethereum ecosystem. It is composed of several elements which are located in different POA Network repositories. 
-
-For a complete picture of the POA Bridge functionality, it is useful to explore each repository.
+The POA Bridge allows users to transfer assets between two chains in the Ethereum ecosystem. It is composed of several elements which are located in different POA Network repositories:
 
 **Bridge Elements**
-1. Bridge UI Application. A DApp interface to transfer tokens and coins between chains, located in this repository.
-2. [Bridge Smart Contracts](https://github.com/poanetwork/poa-bridge-contracts). Solidity contracts used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
-3. [Token Bridge](https://github.com/poanetwork/token-bridge). The token bridge oracle written in NodeJS.
+1. An oracle written in NodeJS, contained in this repository.
+2. [Solidity smart contracts](https://github.com/poanetwork/poa-bridge-contracts). Used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
+3. [Bridge UI Application](https://github.com/poanetwork/bridge-ui). A DApp interface to transfer tokens and coins between chains.
 4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
-5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments and allows you to deploy separate bridge instances for validators.
+5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments.
 
-## Bridge UI Application
+The bridge oracle is deployed on specified validator nodes (only nodes whose private keys correspond to addresses specified in the smart contracts) in the network. The oracle connects to two chains via a Remote Procedure Call (RPC). It is responsible for:
+- listening to events related to bridge contracts
+- sending transactions to authorize asset transfers
 
-The UI provides an intuitive interface for assets transfer between networks running the Bridge smart contracts. Users can connect to a web3 wallet such as [Nifty Wallet](https://chrome.google.com/webstore/detail/nifty-wallet/jbdaocneiiinmjbjlgalhcelgbejmnid?hl=en) or [MetaMask](https://metamask.io/) and complete the transfer through a web browser.
+Following is an overview of the NodeJS bridge oracle and [instructions for getting started](#how-to-use) with the POA Bridge.
 
-The current implementation allows for several bridge modes.
+## Interoperability
 
-  1. `Native-to-ERC20` Coins on a Home network can be converted to ERC20-compatible tokens on a Foreign network. Coins are locked on the Home side and the corresponding amount of ERC20 tokens are minted on the Foreign side. When the operation is reversed, tokens are burnt on the Foreign side and unlocked in the Home network.
-  2. `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B".
+Interoperability is the ability to share resources between networks. The POA Bridge is an interoperability protocol where users can transfer value (ERC20 compatible tokens and network coins) between chains in the Ethereum ecosystem.  This creates opportunities to use different chains for different purposes. For example, smart contracts can allocate resource intensive operations to a sidechain where transactions are fast and inexpensive.
 
-  ![Bridge UI](bridge-ui.png)
+## Network Processes 
 
-### UI Features
-- Shows daily limits in both networks
-- Displays all events in both networks
-- Filter events from a specific block number on both sides of the bridge
-- Find a corresponding event on different sides of the bridge
-- Submit a transaction from Home to Foreign network
-- Submit a transaction from Foreign to Home network
+### Network Definitions
 
-### User Transactions
-- Connect to the network you want to transfer coins from using a web3 wallet such as Nifty Wallet or MetaMask. This can be the Home or Foreign network. 
+ Bridging occurs between two networks.
 
-The wallet must be funded to cover gas costs related to the transfer. With the Native-to-ERC20 bridge, the wallet must contain the amount to transfer, and with the ERC20-to-ERC20 bridge, the wallet must contain tokens linked with the network you are transferring from.  
+ * **Home** - or Native - is a network with fast and inexpensive operations. All bridge operations to collect validator confirmations are performed on this side of the bridge.
 
-**Process**
+* **Foreign** can be any chain, but generally refers to the Ethereum mainnet. 
 
-- Specify the amount to send.
-- Click the `Transfer` button.
-- Confirm the transaction via the web3 wallet. 
+### Operational Modes
 
-The same address is used to send a coin from the Home network and receive a token on the Foreign Network. In order to send assets in the opposite direction, change the network in the web3 wallet. 
+The POA bridge currently provides two operational modes, with a 3rd mode in development.
 
-![Web3 Wallet Change Network](web3wallet_network.gif)
+- [x] `Native-to-ERC20` **Coins** on a Home network can be converted to ERC20-compatible **tokens** on a Foreign network. Coins are locked on the Home side and the corresponding amount of ERC20 tokens are minted on the Foreign side. When the operation is reversed, tokens are burnt on the Foreign side and unlocked in the Home network. 
+- [x] `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B".
+- [ ] `ERC20-to-Native`: Currently in development. Pre-existing tokens in the Foreign network are locked and coins are minted in the `Home` network. The Home network consensus engine in this case should support invocation of Parity's Block Reward contract (https://wiki.parity.io/Block-Reward-Contract.html) to mint coins per the bridge contract request.
 
 
-### Resources
- Some of the following resources are outdated, but provide a general sense of the UI and transactional flow.
+## Architecture
 
-- [Deployed URL for POA -> Ethereum Network Bridge](https://bridge.poa.net/)
-- [Testnet Bridge URL](https://bridge-testnet.poa.net/)
-- [Bridge UI Tutorial Videos](https://www.youtube.com/playlist?list=PLS5SEs8ZftgUqR3hVFiEXQLqE9QI8sIGz)
-- [Article on the POA Bridge](https://medium.com/poa-network/cross-chain-bridges-paving-the-way-to-internet-of-blockchains-422ac94bc2e5)
-- Wallet Resources
-  - [MetaMask](https://consensys.zendesk.com/hc/en-us/categories/360001045692-Using-MetaMask)
-  - [Nifty Wallet](https://poanet.zendesk.com/hc/en-us/articles/360008957634-Nifty-Wallet)
+### Native-to-ERC20
 
-## Getting Started
+![Native-to-ERC](Native-to-ERC.png)
 
-The following is an example setup using the POA Sokol testnet as the Home network, and the Ethereum Kovan testnet as the Foreign network. The instructions for the Bridge UI are identical for an `ERC20-to-ERC20` configuration, but the smart contract deployment steps will vary.
+### ERC20-to-ERC20
 
-### Dependencies
+![ERC-to-ERC](ERC-to-ERC.png)
 
-- [poa-bridge-contracts](https://github.com/poanetwork/poa-bridge-contracts)
-- [token-bridge](https://github.com/poanetwork/token-bridge)
-- [node.js](https://nodejs.org/en/download/)
-- [Nifty Wallet](https://chrome.google.com/webstore/detail/nifty-wallet/jbdaocneiiinmjbjlgalhcelgbejmnid?hl=en) or [MetaMask](https://metamask.io/)
 
-### Example Setup
+### Watcher
+A watcher listens for a certain event and creates proper jobs in the queue. These jobs contain the transaction data (without the nonce) and the transaction hash for the related event. The watcher runs on a given frequency, keeping track of the last processed block.
 
-1. Create an empty folder for setting up your bridge. In this example we call it `sokol-kovan-bridge`.
-`mkdir sokol-kovan-bridge && cd sokol-kovan-bridge`  
+If the watcher observes that the transaction data cannot be prepared, which generally means that the corresponding method of the bridge contract cannot be invoked, it inspects the contract state to identify the potential reason for failure and records this in the logs. 
 
-2. Prepare temporary ETH address(es) for deployment by creating new account(s) in Nifty Wallet or MetaMask. See the [wallet resources](#resources) if you need more information on this step. This account is used:
-    * for deploying bridge contracts to both networks
-    * as the bridge contracts management wallet
-    * as the validator's wallet address
 
-3. Fund the test account(s).
-    * Fund Home accounts (`Validators`) using the [POA Sokol Faucet](https://faucet-sokol.herokuapp.com/)
-    * Get free Kovan Coins from the [gitter channel](https://gitter.im/kovan-testnet/faucet) or [Iracus faucet](https://github.com/kovan-testnet/faucet) for Foreign Accounts. Get 5 Keth to 1 acc, and transfer from it to all other wallets.
+There are three Watchers:
+- **Signature Request Watcher**: Listens to `UserRequestForSignature` events on the Home network.
+- **Collected Signatures Watcher**: Listens to `CollectedSignatures` events on the Home network.
+- **Affirmation Request Watcher**: Depends on the bridge mode. 
+   - `Native-to-ERC20`: Listens to `UserRequestForAffirmation` raised by the bridge contract.
+   - `ERC20-to-ERC20` and `ERC20-to-Native`: Listens to `Transfer` events raised by the token contract.
 
-4. Deploy the Sokol <-> Kovan Bridge contracts.
-    * Go to the the `sokol-kovan-bridge` folder created in step 1 and `git clone https://github.com/poanetwork/poa-bridge-contracts`
-    * Follow instructions in the [POA Bridge contracts repo](https://github.com/poanetwork/poa-bridge-contracts).
-    * Set the parameters in the .env file.
-      * `DEPLOYMENT_ACCOUNT_PRIVATE_KEY`: Export the private key from step 2
-      * `HOME_RPC_URL`=https://sokol.poa.network
-      * Wallet address(es) for bridge contracts management. For testing, you can use the same address for all address values in the file. This includes:
-        * `HOME_OWNER_MULTISIG`
-        * `HOME_UPGRADEABLE_ADMIN_VALIDATORS`
-        * `HOME_UPGRADEABLE_ADMIN_BRIDGE`
-        * `FOREIGN_OWNER_MULTISIG`
-        * `FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS`
-        * `FOREIGN_UPGRADEABLE_ADMIN_BRIDGE`
-        * `VALIDATORS`
-      * FOREIGN_RPC_URL=https://kovan.infura.io/mew
-    * When deployment is finished, check that the `bridgeDeploymentResults.json` file exists in the `poa-bridge-contracts/deploy` directory and includes the bridge contract addresses.  
 
-5. Install and run the POA Token Bridge.
-    * Got to the `sokol-kovan-bridge` folder and `git clone https://github.com/poanetwork/token-bridge`
-    * Follow instructions in the [POA Token Bridge repo](https://github.com/poanetwork/token-bridge).
+### Sender
+A sender subscribes to the queue and keeps track of the nonce. It takes jobs from the queue, extracts transaction data, adds the proper nonce, and sends it to the network.
 
-If successful, you will see bridge processes run when you issue a command. For example, run `npm run watcher:signature-request`
+There are two Senders:
+- **Home Sender**: Sends transaction to the `Home` network.
+- **Foreign Sender**: Sends transaction to the `Foreign` network.
 
-**Example NPM Output:**
-```bash
-[1539195000507] INFO (watcher-signature-request): Connected to redis
-[1539195000545] INFO (watcher-signature-request): Connected to amqp Broker
-[1539195006085] INFO (watcher-signature-request): Found 0 UserRequestForSignature events
-[1539195011467] INFO (watcher-signature-request): Found 0 UserRequestForSignature events
+### RabbitMQ
+
+[RabbitMQ](https://www.rabbitmq.com/) is used to send jobs from watchers to senders.
+
+### Redis DB
+
+Redis is used to store the number of blocks that were already inspected by watchers, and the NOnce (Number of Operation) which was used by the sender last time to send a transaction.
+
+For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues/90)
+
+# How to Use
+
+## Installation and Deployment
+
+#### Deploy the Bridge Contracts
+
+1. [Deploy the bridge contracts](https://github.com/poanetwork/poa-bridge-contracts/blob/master/deploy/README.md)
+
+2. Open `bridgeDeploymentResults.json` generated by the bridge contract deployment process.
+  
+   `Native-to-ERC20` mode example:
+   ```json
+   {
+       "homeBridge": {
+           "address": "0xc60daff55ec5b5ce5c3d2105a77e287ff638c35e",
+           "deployedBlockNumber": 123321
+       },
+       "foreignBridge": {
+           "address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+           "deployedBlockNumber": 456654,
+           "erc677": {
+               "address": "0x41a29780309dc2582f080f6af89953be3435679a"
+           }
+       }
+   }
+   ```
+
+   `ERC20-to-ERC20` mode example:
+   ```json
+   {
+       "homeBridge": {
+           "address": "0x765a0d90e5a5773deacbd94b2dc941cbb163bdab",
+           "deployedBlockNumber": 789987,
+           "erc677": {
+               "address": "0x269f57f5ae5421d084686f9e353f5b7ee6af54c2"
+           }
+       },
+       "foreignBridge": {
+           "address": "0x7ae703ea88b0545eef1f0bf8f91d5276e39be2f7",
+           "deployedBlockNumber": 567765
+       }
+   }
+   ```
+
+## Configuration
+
+1. Create a `.env` file: `cp .env.example .env`
+
+2. Fill in the required information using the output data from `bridgeDeploymentResults.json`. Check the tables with the [set of parameters](#configuration-parameters) below to see their explanation.
+
+## Run the Processes
+
+There are two options to run the nodejs oracle:
+1. Docker containers. This requires [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed. If you are on Linux, it's also recommended that you [create a docker group and add your user to it](https://docs.docker.com/install/linux/linux-postinstall/), so that you can use the CLI without sudo.
+2. NodeJs Package Manager.
+
+### NPM
+
+  - `redis-server` starts Redis. redis-cli ping will return a pong if Redis is running.
+  - `rabbitmq-server` starts RabbitMQ. Use rabbitmqctl status to check if RabbitMQ is running.
+  - `npm run watcher:signature-request`
+  - `npm run watcher:collected-signatures`
+  - `npm run watcher:affirmation-request`
+  - `npm run sender:home`
+  - `npm run sender:foreign`
+
+### Docker
+
+  - Start RabbitMQ and Redis: if you are running the bridge containers for the first time use `docker-compose up -d --build` otherwise use `docker-compose up -d` 
+  - `docker-compose run bridge npm run watcher:signature-request`
+  - `docker-compose run bridge npm run watcher:collected-signatures`
+  - `docker-compose run bridge npm run watcher:affirmation-request`
+  - `docker-compose run bridge npm run sender:home`
+  - `docker-compose run bridge npm run sender:foreign`
+
+### Bridge UI
+
+See the [Bridge UI installation instructions](https://github.com/poanetwork/bridge-ui/) to configure and use the optional Bridge UI.
+
+## Rollback the Last Processed Block in Redis
+
+If the bridge does not handle an event properly (i.e. a transaction stalls due to a low gas price), the Redis DB can be rolled back. You must identify which watcher needs to re-run. For example, if the validator signatures were collected but the transaction with signatures was not sent to the Foreign network, the `collected-signatures` watcher must look at the block where the corresponding `CollectedSignatures` event was raised.
+
+Execute this command in the bridge root directory:
+
+```shell
+bash ./reset-lastBlock.sh <watcher> <block num>
+```
+or
+```shell
+docker-compose run bridge bash ./reset-lastBlock.sh <watcher> <block num>
 ```
 
-**Example Docker Output:**
+where the _watcher_ could be one of:
 
-**Note:** The output will depend on your Docker configuration. You may need to access the container logs to view.
+- `signature-request`
+- `collected-signatures`
+- `affirmation-request`
 
-```bash
-{"level":30,"time":1539366879816,"msg":"Connected to redis","validator":"0xC9f74f16F3743f4370c66DdA728D1751BCBa2616","name":"watcher-signature-request","v":1}
-{"level":30,"time":1539366879880,"msg":"Connected to amqp Broker","validator":"0xC9f74f16F3743f4370c66DdA728D1751BCBa2616","name":"watcher-signature-request","v":1}
-{"level":30,"time":1539366885587,"msg":"Found 0 UserRequestForSignature events","validator":"0xC9f74f16F3743f4370c66DdA728D1751BCBa2616","name":"watcher-signature-request","v":1}
-```
+### Configuration parameters
 
-6. Keep the bridge processes running. Open a separate terminal window and go to the `sokol-kovan-bridge` folder to install and unpack this repository.
+| Variable | Description | Values |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| `BRIDGE_MODE` | The bridge mode. The bridge starts listening to a different set of events based on this parameter. | `NATIVE_TO_ERC` / `ERC_TO_ERC` |
+| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
+| `HOME_BRIDGE_ADDRESS` | The address of the bridge contract address in the Home network. It is used to listen to events from and send validators' transactions to the Home network. | hexidecimal beginning with "0x" |
+| `HOME_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Home network for new blocks. The interval should match the average production time for a new block. | integer |
+| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
+| `FOREIGN_BRIDGE_ADDRESS` | The  address of the bridge contract address in the Foreign network. It is used to listen to events from and send validators' transactions to the Foreign network. | hexidecimal beginning with "0x" |
+| `ERC20_TOKEN_ADDRESS` | Used with the `ERC_TO_ERC` bridge mode, this parameter specifies the ERC20-compatible token contract address. The token contract address is used to identify transactions that transfer tokens to the Foreign Bridge account address. Omit this parameter with other bridge modes. | hexidecimal beginning with "0x" |
+| `FOREIGN_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Foreign network for new blocks. The interval should match the average production time for a new block. | integer |
+| `HOME_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Home network. The gas price provided by the oracle is used to send the validator's transactions to the RPC node. Since it is assumed that the Home network has a predefined gas price (e.g. the gas price in the Core of POA.Network is `1 GWei`), the gas price oracle parameter can be omitted for such networks. | URL |
+| `HOME_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `HOME_GAS_PRICE_ORACLE_URL` is not used. | `instant` / `fast` / `standard` / `slow` |
+| `HOME_GAS_PRICE_FALLBACK` | The gas price (in GWei) that is used if both the oracle and the fall back gas price specified in the Home Bridge contract are not available. | integer |
+| `HOME_GAS_PRICE_UPDATE_INTERVAL` | An interval in milliseconds used to get the updated gas price value either from the oracle or from the Home Bridge contract. | integer |
+| `FOREIGN_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Foreign network. The provided gas price is used to send the validator's transactions to the RPC node. If the Foreign network is Ethereum Foundation mainnet, the oracle URL can be: https://gasprice.poa.network. Otherwise this parameter can be omitted. | URL |
+| `FOREIGN_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `FOREIGN_GAS_PRICE_ORACLE_URL`is not used. | `instant` / `fast` / `standard` / `slow` |
+| `FOREIGN_GAS_PRICE_FALLBACK` | The gas price (in GWei) used if both the oracle and fall back gas price specified in the Foreign Bridge contract are not available. | integer |
+| `FOREIGN_GAS_PRICE_UPDATE_INTERVAL` | The interval in milliseconds used to get the updated gas price value either from the oracle or from the Foreign Bridge contract. | integer |
+| `VALIDATOR_ADDRESS_PRIVATE_KEY` | The private key of the bridge validator used to sign confirmations before sending transactions to the bridge contracts. The validator account is calculated automatically from the private key. Every bridge instance (set of watchers and senders) must have its own unique private key. The specified private key is used to sign transactions on both sides of the bridge. | hexidecimal without "0x" |
+| `HOME_START_BLOCK` | The block number in the Home network used to start watching for events when the bridge instance is run for the first time. Usually this is the same block where the Home Bridge contract is deployed. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
+| `FOREIGN_START_BLOCK` | The block number in the Foreign network used to start watching for events when the bridge instance runs for the first time. Usually this is the same block where the Foreign Bridge contract was deployed to. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
+| `QUEUE_URL` | RabbitMQ URL used by watchers and senders to communicate to the message queue. Typically set to: `amqp://127.0.0.1`. | local URL |
+| `REDIS_URL` | Redis DB URL used by watchers and senders to communicate to the database. Typically set to: `redis://127.0.0.1:6379`. | local URL |
+| `REDIS_LOCK_TTL` | Threshold in milliseconds for locking a resource in the Redis DB. Until the threshold is exceeded, the resource is unlocked. Usually it is `1000`. | integer |
+| `ALLOW_HTTP` | **Only use in test environments - must be omitted in production environments.**. If this parameter is specified and set to `yes`, RPC URLs can be specified in form of HTTP links. A warning that the connection is insecure will be written to the logs. | `yes` / `no` |
 
-    * `git clone https://github.com/poanetwork/bridge-ui.git`  
-    * `cd bridge-ui`
-    * Update submodules  
-`git submodule update --init --recursive --remote` 
-    * Install dependencies  
-`npm install`  
-    * Create a .env file from the example file[.env.example](.env.example)  
-`cp .env.example .env`  
-    * Insert the addresses from the bridgeDeploymentResults.json file into the .env file.
-`cat ../poa-bridge-contracts/deploy/bridgeDeploymentResults.json`  
-```bash
-    # HomeBridge address in bridgeDeploymentResults.json
-    REACT_APP_HOME_BRIDGE_ADDRESS=0x.. 
-    # ForeignBridge address in bridgeDeploymentResults.json
-    REACT_APP_FOREIGN_BRIDGE_ADDRESS=0x..
-    # https public RPC node for Foreign network
-    REACT_APP_FOREIGN_HTTP_PARITY_URL=https://kovan.infura.io/mew
-    # public RPC node for Home network 
-    REACT_APP_HOME_HTTP_PARITY_URL=https://sokol.poa.network 
-    # Gas price speed option (slow, standard, fast, instant)
-    REACT_APP_GAS_PRICE_SPEED_TYPE=fast
-```
-  * Run `npm run start`
-  * Make sure your web3 wallet (Nifty Wallet or MetaMask) is funded and connected to the POA Sokol Network (see step 2)
-  * Specify an amount and click `Transfer` to complete a cross-chain transaction from Sokol to Kovan
+### Useful Commands for Development
+
+#### RabbitMQ
+Command | Description
+--- | ---
+`rabbitmqctl list_queues` | List all queues
+`rabbitmqctl purge_queue home` | Remove all messages from `home` queue
+`rabbitmqctl status` | check if rabbitmq server is currently running  
+`rabbitmq-server`    | start rabbitMQ server  
+
+#### Redis
+Use `redis-cli`
+
+Command | Description
+--- | ---
+`KEYS *` | Returns all keys
+`SET signature-request:lastProcessedBlock 1234` | Set key to hold the string value.
+`GET signature-request:lastProcessedBlock` | Get the key value.
+`DEL signature-request:lastProcessedBlock` | Removes the specified key.
+`FLUSHALL` | Delete all the keys in all existing databases.
+`redis-cli ping`     | check if redis is running.  
+`redis-server`       | start redis server.  
 
 ## Testing
 
-`npm run test`
+```bash
+npm test
+```
 
-To run tests with coverage
+### E2E tests
 
-`npm run coverage`
+See the [E2E README](/e2e) for instructions. 
+
+### Native-to-ERC20 Mode Testing
+
+When running the processes, the following commands can be used to test functionality.
+
+- To send deposits to a home contract run `node scripts/sendUserTxToHome.js <tx num>` (or `docker-compose run bridge node scripts/sendUserTxToHome.js <tx num>`), where `<tx num>` is how many tx will be sent out to deposit.
+
+- To send withdrawals to a foreign contract run `node scripts/sendUserTxToForeign.js <tx num>` (or `docker-compose run bridge node scripts/sendUserTxToForeign.js <tx num>`), where `<tx num>` is how many tx will be sent out to withdraw.
+
+### ERC20-to-ERC20 Mode Testing
+
+- To deposit from a Foreign to a Home contract run `node scripts/sendUserTxToErcForeign.js <tx num>`.
+
+- To make withdrawal to Home from a Foreign contract run `node scripts/sendUserTxToErcHome.js <tx num>`.
+
+### Configuration parameters for testing
+
+| Variable | Description |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. |
+| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. |
+| `USER_ADDRESS` | An account - the current owner of coins/tokens. |
+| `USER_ADDRESS_PRIVATE_KEY` | A private key belonging to the account. |
+| `HOME_BRIDGE_ADDRESS` | Address of the bridge in the Home network to send transactions. |
+| `HOME_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Home network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5   |
+| `FOREIGN_BRIDGE_ADDRESS` | Address of the bridge in the Foreign network to send transactions. |
+| `FOREIGN_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Foreign network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5 |
+| `ERC20_TOKEN_ADDRESS` |  An address of the token deployed on the Foreign side for `ERC20-to-ERC20` mode. Omit this parameter with other bridge modes. |
+| `BRIDGEABLE_TOKEN_ADDRESS` | An address of the token deployed on the Foreign side for `Native-to-ERC20` mode or on the Home side for `ERC20-to-ERC20` (specified as erc677 in the `poa-bridge-contracts/deploy/bridgeDeploymentResults.json` file). |
+
 
 ## Contributing
 
@@ -175,3 +285,7 @@ See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and p
 [![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
+## References
+
+* [POA Bridge FAQ](https://poanet.zendesk.com/hc/en-us/categories/360000349273-POA-Bridge)

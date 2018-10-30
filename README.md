@@ -1,291 +1,178 @@
-
-# POA Bridge - NodeJS Oracle
-
-[![Build Status](https://travis-ci.org/poanetwork/bridge-nodejs.svg?branch=develop)](https://travis-ci.org/poanetwork/bridge-nodejs)
-[![Gitter](https://badges.gitter.im/poanetwork/poa-bridge.svg)](https://gitter.im/poanetwork/poa-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-## Bridge Overview
-
-The POA Bridge allows users to transfer assets between two chains in the Ethereum ecosystem. It is composed of several elements which are located in different POA Network repositories:
-
-**Bridge Elements**
-1. An oracle written in NodeJS, contained in this repository.
-2. [Solidity smart contracts](https://github.com/poanetwork/poa-bridge-contracts). Used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
-3. [Bridge UI Application](https://github.com/poanetwork/bridge-ui). A DApp interface to transfer tokens and coins between chains.
-4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
-5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments.
-
-The bridge oracle is deployed on specified validator nodes (only nodes whose private keys correspond to addresses specified in the smart contracts) in the network. The oracle connects to two chains via a Remote Procedure Call (RPC). It is responsible for:
-- listening to events related to bridge contracts
-- sending transactions to authorize asset transfers
-
-Following is an overview of the NodeJS bridge oracle and [instructions for getting started](#how-to-use) with the POA Bridge.
-
-## Interoperability
-
-Interoperability is the ability to share resources between networks. The POA Bridge is an interoperability protocol where users can transfer value (ERC20 compatible tokens and network coins) between chains in the Ethereum ecosystem.  This creates opportunities to use different chains for different purposes. For example, smart contracts can allocate resource intensive operations to a sidechain where transactions are fast and inexpensive.
-
-## Network Processes 
-
-### Network Definitions
-
- Bridging occurs between two networks.
-
- * **Home** - or Native - is a network with fast and inexpensive operations. All bridge operations to collect validator confirmations are performed on this side of the bridge.
-
-* **Foreign** can be any chain, but generally refers to the Ethereum mainnet. 
-
-### Operational Modes
-
-The POA bridge currently provides two operational modes, with a 3rd mode in development.
-
-- [x] `Native-to-ERC20` **Coins** on a Home network can be converted to ERC20-compatible **tokens** on a Foreign network. Coins are locked on the Home side and the corresponding amount of ERC20 tokens are minted on the Foreign side. When the operation is reversed, tokens are burnt on the Foreign side and unlocked in the Home network. 
-- [x] `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B".
-- [ ] `ERC20-to-Native`: Currently in development. Pre-existing tokens in the Foreign network are locked and coins are minted in the `Home` network. The Home network consensus engine in this case should support invocation of Parity's Block Reward contract (https://wiki.parity.io/Block-Reward-Contract.html) to mint coins per the bridge contract request.
-
-
-## Architecture
-
-### Native-to-ERC20
-
-![Native-to-ERC](Native-to-ERC.png)
-
-### ERC20-to-ERC20
-
-![ERC-to-ERC](ERC-to-ERC.png)
-
-
-### Watcher
-A watcher listens for a certain event and creates proper jobs in the queue. These jobs contain the transaction data (without the nonce) and the transaction hash for the related event. The watcher runs on a given frequency, keeping track of the last processed block.
-
-If the watcher observes that the transaction data cannot be prepared, which generally means that the corresponding method of the bridge contract cannot be invoked, it inspects the contract state to identify the potential reason for failure and records this in the logs. 
-
-
-There are three Watchers:
-- **Signature Request Watcher**: Listens to `UserRequestForSignature` events on the Home network.
-- **Collected Signatures Watcher**: Listens to `CollectedSignatures` events on the Home network.
-- **Affirmation Request Watcher**: Depends on the bridge mode. 
-   - `Native-to-ERC20`: Listens to `UserRequestForAffirmation` raised by the bridge contract.
-   - `ERC20-to-ERC20` and `ERC20-to-Native`: Listens to `Transfer` events raised by the token contract.
-
-
-### Sender
-A sender subscribes to the queue and keeps track of the nonce. It takes jobs from the queue, extracts transaction data, adds the proper nonce, and sends it to the network.
-
-There are two Senders:
-- **Home Sender**: Sends transaction to the `Home` network.
-- **Foreign Sender**: Sends transaction to the `Foreign` network.
-
-### RabbitMQ
-
-[RabbitMQ](https://www.rabbitmq.com/) is used to send jobs from watchers to senders.
-
-### Redis DB
-
-Redis is used to store the number of blocks that were already inspected by watchers, and the NOnce (Number of Operation) which was used by the sender last time to send a transaction.
-
-For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues/90)
-
-# How to Use
-
-## Installation and Deployment
-
-#### Deploy the Bridge Contracts
-
-1. [Deploy the bridge contracts](https://github.com/poanetwork/poa-bridge-contracts/blob/master/deploy/README.md)
-
-2. Open `bridgeDeploymentResults.json` generated by the bridge contract deployment process.
-  
-   `Native-to-ERC20` mode example:
-   ```json
-   {
-       "homeBridge": {
-           "address": "0xc60daff55ec5b5ce5c3d2105a77e287ff638c35e",
-           "deployedBlockNumber": 123321
-       },
-       "foreignBridge": {
-           "address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
-           "deployedBlockNumber": 456654,
-           "erc677": {
-               "address": "0x41a29780309dc2582f080f6af89953be3435679a"
-           }
-       }
-   }
-   ```
-
-   `ERC20-to-ERC20` mode example:
-   ```json
-   {
-       "homeBridge": {
-           "address": "0x765a0d90e5a5773deacbd94b2dc941cbb163bdab",
-           "deployedBlockNumber": 789987,
-           "erc677": {
-               "address": "0x269f57f5ae5421d084686f9e353f5b7ee6af54c2"
-           }
-       },
-       "foreignBridge": {
-           "address": "0x7ae703ea88b0545eef1f0bf8f91d5276e39be2f7",
-           "deployedBlockNumber": 567765
-       }
-   }
-   ```
-
-## Configuration
-
-1. Create a `.env` file: `cp .env.example .env`
-
-2. Fill in the required information using the output data from `bridgeDeploymentResults.json`. Check the tables with the [set of parameters](#configuration-parameters) below to see their explanation.
-
-## Run the Processes
-
-There are two options to run the nodejs oracle:
-1. Docker containers. This requires [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed. If you are on Linux, it's also recommended that you [create a docker group and add your user to it](https://docs.docker.com/install/linux/linux-postinstall/), so that you can use the CLI without sudo.
-2. NodeJs Package Manager.
-
-### NPM
-
-  - `redis-server` starts Redis. redis-cli ping will return a pong if Redis is running.
-  - `rabbitmq-server` starts RabbitMQ. Use rabbitmqctl status to check if RabbitMQ is running.
-  - `npm run watcher:signature-request`
-  - `npm run watcher:collected-signatures`
-  - `npm run watcher:affirmation-request`
-  - `npm run sender:home`
-  - `npm run sender:foreign`
-
-### Docker
-
-  - Start RabbitMQ and Redis: if you are running the bridge containers for the first time use `docker-compose up -d --build` otherwise use `docker-compose up -d` 
-  - `docker-compose run bridge npm run watcher:signature-request`
-  - `docker-compose run bridge npm run watcher:collected-signatures`
-  - `docker-compose run bridge npm run watcher:affirmation-request`
-  - `docker-compose run bridge npm run sender:home`
-  - `docker-compose run bridge npm run sender:foreign`
-
-### Bridge UI
-
-See the [Bridge UI installation instructions](https://github.com/poanetwork/bridge-ui/) to configure and use the optional Bridge UI.
-
-## Rollback the Last Processed Block in Redis
-
-If the bridge does not handle an event properly (i.e. a transaction stalls due to a low gas price), the Redis DB can be rolled back. You must identify which watcher needs to re-run. For example, if the validator signatures were collected but the transaction with signatures was not sent to the Foreign network, the `collected-signatures` watcher must look at the block where the corresponding `CollectedSignatures` event was raised.
-
-Execute this command in the bridge root directory:
-
-```shell
-bash ./reset-lastBlock.sh <watcher> <block num>
-```
-or
-```shell
-docker-compose run bridge bash ./reset-lastBlock.sh <watcher> <block num>
-```
-
-where the _watcher_ could be one of:
-
-- `signature-request`
-- `collected-signatures`
-- `affirmation-request`
-
-### Configuration parameters
-
-| Variable | Description | Values |
-|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
-| `BRIDGE_MODE` | The bridge mode. The bridge starts listening to a different set of events based on this parameter. | `NATIVE_TO_ERC` / `ERC_TO_ERC` |
-| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
-| `HOME_BRIDGE_ADDRESS` | The address of the bridge contract address in the Home network. It is used to listen to events from and send validators' transactions to the Home network. | hexidecimal beginning with "0x" |
-| `HOME_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Home network for new blocks. The interval should match the average production time for a new block. | integer |
-| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
-| `FOREIGN_BRIDGE_ADDRESS` | The  address of the bridge contract address in the Foreign network. It is used to listen to events from and send validators' transactions to the Foreign network. | hexidecimal beginning with "0x" |
-| `ERC20_TOKEN_ADDRESS` | Used with the `ERC_TO_ERC` bridge mode, this parameter specifies the ERC20-compatible token contract address. The token contract address is used to identify transactions that transfer tokens to the Foreign Bridge account address. Omit this parameter with other bridge modes. | hexidecimal beginning with "0x" |
-| `FOREIGN_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Foreign network for new blocks. The interval should match the average production time for a new block. | integer |
-| `HOME_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Home network. The gas price provided by the oracle is used to send the validator's transactions to the RPC node. Since it is assumed that the Home network has a predefined gas price (e.g. the gas price in the Core of POA.Network is `1 GWei`), the gas price oracle parameter can be omitted for such networks. | URL |
-| `HOME_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `HOME_GAS_PRICE_ORACLE_URL` is not used. | `instant` / `fast` / `standard` / `slow` |
-| `HOME_GAS_PRICE_FALLBACK` | The gas price (in GWei) that is used if both the oracle and the fall back gas price specified in the Home Bridge contract are not available. | integer |
-| `HOME_GAS_PRICE_UPDATE_INTERVAL` | An interval in milliseconds used to get the updated gas price value either from the oracle or from the Home Bridge contract. | integer |
-| `FOREIGN_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Foreign network. The provided gas price is used to send the validator's transactions to the RPC node. If the Foreign network is Ethereum Foundation mainnet, the oracle URL can be: https://gasprice.poa.network. Otherwise this parameter can be omitted. | URL |
-| `FOREIGN_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `FOREIGN_GAS_PRICE_ORACLE_URL`is not used. | `instant` / `fast` / `standard` / `slow` |
-| `FOREIGN_GAS_PRICE_FALLBACK` | The gas price (in GWei) used if both the oracle and fall back gas price specified in the Foreign Bridge contract are not available. | integer |
-| `FOREIGN_GAS_PRICE_UPDATE_INTERVAL` | The interval in milliseconds used to get the updated gas price value either from the oracle or from the Foreign Bridge contract. | integer |
-| `VALIDATOR_ADDRESS_PRIVATE_KEY` | The private key of the bridge validator used to sign confirmations before sending transactions to the bridge contracts. The validator account is calculated automatically from the private key. Every bridge instance (set of watchers and senders) must have its own unique private key. The specified private key is used to sign transactions on both sides of the bridge. | hexidecimal without "0x" |
-| `HOME_START_BLOCK` | The block number in the Home network used to start watching for events when the bridge instance is run for the first time. Usually this is the same block where the Home Bridge contract is deployed. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
-| `FOREIGN_START_BLOCK` | The block number in the Foreign network used to start watching for events when the bridge instance runs for the first time. Usually this is the same block where the Foreign Bridge contract was deployed to. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
-| `QUEUE_URL` | RabbitMQ URL used by watchers and senders to communicate to the message queue. Typically set to: `amqp://127.0.0.1`. | local URL |
-| `REDIS_URL` | Redis DB URL used by watchers and senders to communicate to the database. Typically set to: `redis://127.0.0.1:6379`. | local URL |
-| `REDIS_LOCK_TTL` | Threshold in milliseconds for locking a resource in the Redis DB. Until the threshold is exceeded, the resource is unlocked. Usually it is `1000`. | integer |
-| `ALLOW_HTTP` | **Only use in test environments - must be omitted in production environments.**. If this parameter is specified and set to `yes`, RPC URLs can be specified in form of HTTP links. A warning that the connection is insecure will be written to the logs. | `yes` / `no` |
-
-### Useful Commands for Development
-
-#### RabbitMQ
-Command | Description
---- | ---
-`rabbitmqctl list_queues` | List all queues
-`rabbitmqctl purge_queue home` | Remove all messages from `home` queue
-`rabbitmqctl status` | check if rabbitmq server is currently running  
-`rabbitmq-server`    | start rabbitMQ server  
-
-#### Redis
-Use `redis-cli`
-
-Command | Description
---- | ---
-`KEYS *` | Returns all keys
-`SET signature-request:lastProcessedBlock 1234` | Set key to hold the string value.
-`GET signature-request:lastProcessedBlock` | Get the key value.
-`DEL signature-request:lastProcessedBlock` | Removes the specified key.
-`FLUSHALL` | Delete all the keys in all existing databases.
-`redis-cli ping`     | check if redis is running.  
-`redis-server`       | start redis server.  
-
-## Testing
-
-```bash
-npm test
-```
-
-### E2E tests
-
-See the [E2E README](/e2e) for instructions. 
-
-### Native-to-ERC20 Mode Testing
-
-When running the processes, the following commands can be used to test functionality.
-
-- To send deposits to a home contract run `node scripts/sendUserTxToHome.js <tx num>` (or `docker-compose run bridge node scripts/sendUserTxToHome.js <tx num>`), where `<tx num>` is how many tx will be sent out to deposit.
-
-- To send withdrawals to a foreign contract run `node scripts/sendUserTxToForeign.js <tx num>` (or `docker-compose run bridge node scripts/sendUserTxToForeign.js <tx num>`), where `<tx num>` is how many tx will be sent out to withdraw.
-
-### ERC20-to-ERC20 Mode Testing
-
-- To deposit from a Foreign to a Home contract run `node scripts/sendUserTxToErcForeign.js <tx num>`.
-
-- To make withdrawal to Home from a Foreign contract run `node scripts/sendUserTxToErcHome.js <tx num>`.
-
-### Configuration parameters for testing
-
-| Variable | Description |
-|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. |
-| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. |
-| `USER_ADDRESS` | An account - the current owner of coins/tokens. |
-| `USER_ADDRESS_PRIVATE_KEY` | A private key belonging to the account. |
-| `HOME_BRIDGE_ADDRESS` | Address of the bridge in the Home network to send transactions. |
-| `HOME_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Home network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5. |
-| `FOREIGN_BRIDGE_ADDRESS` | Address of the bridge in the Foreign network to send transactions. |
-| `FOREIGN_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Foreign network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5. |
-| `ERC20_TOKEN_ADDRESS` |  An address of the token deployed on the Foreign side for `ERC20-to-ERC20` mode. Omit this parameter with other bridge modes. |
-| `BRIDGEABLE_TOKEN_ADDRESS` | An address of the token deployed on the Foreign side for `Native-to-ERC20` mode or on the Home side for `ERC20-to-ERC20` (specified as erc677 in the `poa-bridge-contracts/deploy/bridgeDeploymentResults.json` file). |
-
-
-## Contributing
-
-See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
-
-## License
-
-[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
-
-This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
-
-## References
-
-* [POA Bridge FAQ](https://poanet.zendesk.com/hc/en-us/categories/360000349273-POA-Bridge)
+ # Broadcast
+
+ The Broadcast Protocol assumes a network of _N_ nodes that send signed messages to
+ each other, with at most _f_ of them faulty, where _3 f < N_. Handling the networking and
+ signing is the responsibility of this crate's user; a message is only handed to the Broadcast
+ instance after it has been verified to be "from node i". One of the nodes is the "proposer"
+ who sends a value. It needs to be determined beforehand, and all nodes need to know and agree
+ who it is. Under the above conditions, the protocol guarantees that either all or none
+ of the correct nodes output a value, and that if the proposer is correct, all correct nodes
+ output the proposed value.
+
+ ## How it works
+
+ The proposer uses a Reed-Solomon code to split the value into _N_ chunks, _N - 2 f_ of which
+ suffice to reconstruct the value. These chunks are put into a Merkle tree, so that with the
+ branch `b[i]`, the `i`-th chunk `s[i]` can be verified by anyone as belonging to the Merkle
+ tree with root hash `h`. These values are "proof" number `i`: `p[i] = (h, b[i], s[i])`.
+
+ * The proposer sends `Value(p[i])` to each validator `i`.
+ * A validator `i` that receives `Value(p[i])` from the proposer sends it on to everyone else as
+ `Echo(p[i])`.
+ * A validator that has received _N - f_ `Echo`s **or** _f + 1_ `Ready`s with root hash `h`,
+ sends `Ready(h)` to everyone.
+ * A node that has received _2 f + 1_ `Ready`s **and** _N - 2 f_ `Echo`s with root hash `h`
+ decodes and outputs the value, and then terminates.
+
+ Only the first valid `Value` from the proposer, and the first valid `Echo` message from every
+ validator is handled as above. Invalid messages (where the proof isn't correct), `Values`
+ received from other nodes, and all further `Value`s and `Echo`s are ignored, and the sender is
+ reported as faulty.
+
+ In the `Valid(p[i])` messages, the proposer distributes shares of the value equally among all
+ validators, along with a way to verify that all shares belong to the same value.
+
+ An `Echo(p[i])` from validator `i` indicates that it has received its share of the value from
+ the proposer. Since `Echo`s contain the share, they are also used later on to reconstruct the
+ value when the algorithm completes: Every node that receives at least _N - 2 f_ valid `Echo`s
+ with root hash `h` can decode the value.
+
+ A validator sends `Ready(h)` as soon as it knows that everyone will eventually be able to
+ decode the value with root hash `h`. There are two sufficient conditions for that:
+ * If it has received _N - f_ `Echo`s with `h`, it knows that at least _N - 2 f_ **correct**
+ validators have multicast an `Echo` with `h` to everyone, and therefore everyone will
+ eventually receive at least _N - 2 f_ valid ones. So it knows that everyone will be able to
+ decode, and can send `Ready(h)`.
+ Moreover, since every correct validator only sends one kind of `Echo` message, there is no
+ danger of receiving _N - f_ `Echo`s with two different root hashes, so every correct validator
+ will only send one `Ready` message.
+ * Even without enough `Echo`s, if a validator receives _f + 1_ `Ready(h)` messages, it knows
+ that at least one **correct** validator has sent `Ready(h)`. It therefore also knows that
+ everyone will be able to decode eventually, and multicasts `Ready(h)` itself.
+
+ Finally, if a node has received _2 f + 1_ `Ready(h)` messages, it knows that at least _f + 1_
+ **correct** validators have sent it. Thus, every remaining correct validator will eventually
+ receive _f + 1_, and multicast `Ready(h)` itself. Hence every node will receive _2 f + 1_
+ `Ready(h)` messages.<br>
+ In addition, we know at this point that every node will eventually be able to decode, i.e.
+ receive _N - 2 f_ valid `Echo`s (since we know that at least one correct validator has sent
+ `Ready(h)`).<br>
+ In short: Once we satisfy the termination condition in the fourth point above, we know that
+ everyone else will eventually satisfy it, too. So at that point, we can output and terminate.
+
+ ## Example
+
+ In this example, we manually pass messages between instantiated nodes to simulate a network. The
+ network is composed of 7 nodes, and node 3 is the proposer. We use `u64` as network IDs, and
+ start by creating a common network info. Then we input a randomly generated payload into the
+ proposer and process all the resulting messages in a loop. For the purpose of simulation we
+ annotate each message with the node that produced it. For each output, we perform correctness
+ checks to verify that every node has output the same payload as we provided to the proposer
+ node, and that it did so exactly once.
+
+ ```
+ extern crate hbbft;
+ extern crate rand;
+
+ use hbbft::broadcast::{Broadcast, Error, Step};
+ use hbbft::{NetworkInfo, SourcedMessage, Target, TargetedMessage};
+ use rand::{thread_rng, Rng};
+ use std::collections::{BTreeMap, BTreeSet, VecDeque};
+ use std::iter::once;
+ use std::sync::Arc;
+
+ fn main() -> Result<(), Error> {
+     // Our simulated network has seven nodes in total, node 3 is the proposer.
+     const NUM_NODES: u64 = 7;
+     const PROPOSER_ID: u64 = 3;
+
+     let mut rng = thread_rng();
+
+     // Create a random set of keys for testing.
+     let netinfos = NetworkInfo::generate_map(0..NUM_NODES, &mut rng)
+         .expect("Failed to create `NetworkInfo` map");
+
+     // Create initial nodes by instantiating a `Broadcast` for each.
+     let mut nodes = BTreeMap::new();
+     for (i, netinfo) in netinfos {
+         let bc = Broadcast::new(Arc::new(netinfo), PROPOSER_ID)?;
+         nodes.insert(i, bc);
+     }
+
+     // First we generate a random payload.
+     let mut payload: Vec<_> = vec![0; 128];
+     rng.fill_bytes(&mut payload[..]);
+
+     // Define a function for handling one step of a `Broadcast` instance. This function appends new
+     // messages onto the message queue and checks whether each node outputs at most once and the
+     // output is correct.
+     let on_step = |id: u64,
+                    step: Step<u64>,
+                    messages: &mut VecDeque<SourcedMessage<TargetedMessage<_, _>, _>>,
+                    finished_nodes: &mut BTreeSet<u64>| {
+         // Annotate messages with the sender ID.
+         messages.extend(step.messages.into_iter().map(|msg| SourcedMessage {
+             source: id,
+             message: msg,
+         }));
+         if !step.output.is_empty() {
+             // The output should be the same as the input we gave to the proposer.
+             assert!(step.output.iter().eq(once(&payload)));
+             // Every node should output exactly once. Here we check the first half of this
+             // statement, namely that every node outputs at most once.
+             assert!(finished_nodes.insert(id));
+         }
+     };
+
+     let mut messages = VecDeque::new();
+     let mut finished_nodes = BTreeSet::new();
+
+     // Now we can start the algorithm, its input is the payload.
+     let initial_step = {
+         let proposer = nodes.get_mut(&PROPOSER_ID).unwrap();
+         proposer.broadcast(payload.clone()).unwrap()
+     };
+     on_step(
+         PROPOSER_ID,
+         initial_step,
+         &mut messages,
+         &mut finished_nodes,
+     );
+
+     // The message loop: The network is simulated by passing messages around from node to node.
+     while let Some(SourcedMessage {
+         source,
+         message: TargetedMessage { target, message },
+     }) = messages.pop_front()
+     {
+         match target {
+             Target::All => {
+                 for (id, node) in &mut nodes {
+                     let step = node.handle_message(&source, message.clone())?;
+                     on_step(*id, step, &mut messages, &mut finished_nodes);
+                 }
+             }
+             Target::Node(id) => {
+                 let step = {
+                     let node = nodes.get_mut(&id).unwrap();
+                     node.handle_message(&source, message)?
+                 };
+                 on_step(id, step, &mut messages, &mut finished_nodes);
+             }
+         };
+     }
+     // Every node should output exactly once. Here we check the second half of this statement,
+     // namely that every node outputs.
+     assert_eq!(finished_nodes, nodes.keys().cloned().collect());
+     Ok(())
+ }
+ ```
+
+mod broadcast;
+mod error;
+pub(crate) mod merkle;
+mod message;
+
+pub use self::broadcast::{Broadcast, Step};
+pub use self::error::{Error, Result};
+pub use self::message::Message;

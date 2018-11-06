@@ -10,7 +10,7 @@ Mana-Ethereum is currently in development. See the [Project Status] for more inf
 
 [Elixir]: https://elixir-lang.org/
 [Ethereum yellow paper]: https://ethereum.github.io/yellowpaper/paper.pdf
-[Project Status]: (#project-status)
+[Project Status]: #project-status
 
 # Dependencies
 

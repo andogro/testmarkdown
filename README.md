@@ -1,178 +1,139 @@
- # Broadcast
+# threshold_crypto
 
- The Broadcast Protocol assumes a network of _N_ nodes that send signed messages to
- each other, with at most _f_ of them faulty, where _3 f < N_. Handling the networking and
- signing is the responsibility of this crate's user; a message is only handed to the Broadcast
- instance after it has been verified to be "from node i". One of the nodes is the "proposer"
- who sends a value. It needs to be determined beforehand, and all nodes need to know and agree
- who it is. Under the above conditions, the protocol guarantees that either all or none
- of the correct nodes output a value, and that if the proposer is correct, all correct nodes
- output the proposed value.
+[![Build Status](https://travis-ci.org/poanetwork/threshold_crypto.svg?branch=master)](https://travis-ci.org/poanetwork/threshold_crypto)
 
- ## How it works
+A pairing-based threshold cryptosystem for collaborative decryption and
+signatures.
 
- The proposer uses a Reed-Solomon code to split the value into _N_ chunks, _N - 2 f_ of which
- suffice to reconstruct the value. These chunks are put into a Merkle tree, so that with the
- branch `b[i]`, the `i`-th chunk `s[i]` can be verified by anyone as belonging to the Merkle
- tree with root hash `h`. These values are "proof" number `i`: `p[i] = (h, b[i], s[i])`.
+The `threshold_crypto` crate provides constructors for encrypted message handling. It utilizes the [`pairing`](https://crates.io/crates/pairing) elliptic curve library to create and enable reconstruction of public and private key shares.
 
- * The proposer sends `Value(p[i])` to each validator `i`.
- * A validator `i` that receives `Value(p[i])` from the proposer sends it on to everyone else as
- `Echo(p[i])`.
- * A validator that has received _N - f_ `Echo`s **or** _f + 1_ `Ready`s with root hash `h`,
- sends `Ready(h)` to everyone.
- * A node that has received _2 f + 1_ `Ready`s **and** _N - 2 f_ `Echo`s with root hash `h`
- decodes and outputs the value, and then terminates.
+In a network environment, messages are signed and encrypted, and key and
+signature shares are distributed to network participants. A message can be
+decrypted and authenticated only with cooperation from at least `threshold +
+1` nodes.
 
- Only the first valid `Value` from the proposer, and the first valid `Echo` message from every
- validator is handled as above. Invalid messages (where the proof isn't correct), `Values`
- received from other nodes, and all further `Value`s and `Echo`s are ignored, and the sender is
- reported as faulty.
+## Security Audit
 
- In the `Valid(p[i])` messages, the proposer distributes shares of the value equally among all
- validators, along with a way to verify that all shares belong to the same value.
+An [official security audit](https://github.com/poanetwork/wiki/wiki/Threshold-Crypto-Audit) has been completed on `threshold_crypto` by [Jean-Philippe Aumasson](https://aumasson.jp/). No exploitable security issues were found, and potential improvements have been addressed. Dependency updates mentioned in the audit were completed in https://github.com/poanetwork/threshold_crypto/commit/54026f5fe7e0b5a52e446ac01a50469da1f15a71 with the exception of rand, which is currently pinned to version 0.4 (see https://github.com/poanetwork/hbbft/issues/145 for details).
 
- An `Echo(p[i])` from validator `i` indicates that it has received its share of the value from
- the proposer. Since `Echo`s contain the share, they are also used later on to reconstruct the
- value when the algorithm completes: Every node that receives at least _N - 2 f_ valid `Echo`s
- with root hash `h` can decode the value.
+## Usage
 
- A validator sends `Ready(h)` as soon as it knows that everyone will eventually be able to
- decode the value with root hash `h`. There are two sufficient conditions for that:
- * If it has received _N - f_ `Echo`s with `h`, it knows that at least _N - 2 f_ **correct**
- validators have multicast an `Echo` with `h` to everyone, and therefore everyone will
- eventually receive at least _N - 2 f_ valid ones. So it knows that everyone will be able to
- decode, and can send `Ready(h)`.
- Moreover, since every correct validator only sends one kind of `Echo` message, there is no
- danger of receiving _N - f_ `Echo`s with two different root hashes, so every correct validator
- will only send one `Ready` message.
- * Even without enough `Echo`s, if a validator receives _f + 1_ `Ready(h)` messages, it knows
- that at least one **correct** validator has sent `Ready(h)`. It therefore also knows that
- everyone will be able to decode eventually, and multicasts `Ready(h)` itself.
+`Cargo.toml`:
 
- Finally, if a node has received _2 f + 1_ `Ready(h)` messages, it knows that at least _f + 1_
- **correct** validators have sent it. Thus, every remaining correct validator will eventually
- receive _f + 1_, and multicast `Ready(h)` itself. Hence every node will receive _2 f + 1_
- `Ready(h)` messages.<br>
- In addition, we know at this point that every node will eventually be able to decode, i.e.
- receive _N - 2 f_ valid `Echo`s (since we know that at least one correct validator has sent
- `Ready(h)`).<br>
- In short: Once we satisfy the termination condition in the fourth point above, we know that
- everyone else will eventually satisfy it, too. So at that point, we can output and terminate.
+```toml
+[dependencies]
+rand = "0.4"
+threshold_crypto = { version = "0.2", git = "https://github.com/poanetwork/threshold_crypto" }
+```
 
- ## Example
+`main.rs`:
 
- In this example, we manually pass messages between instantiated nodes to simulate a network. The
- network is composed of 7 nodes, and node 3 is the proposer. We use `u64` as network IDs, and
- start by creating a common network info. Then we input a randomly generated payload into the
- proposer and process all the resulting messages in a loop. For the purpose of simulation we
- annotate each message with the node that produced it. For each output, we perform correctness
- checks to verify that every node has output the same payload as we provided to the proposer
- node, and that it did so exactly once.
+```rust
+extern crate rand;
+extern crate threshold_crypto;
 
- ```
- extern crate hbbft;
- extern crate rand;
+use threshold_crypto::SecretKey;
 
- use hbbft::broadcast::{Broadcast, Error, Step};
- use hbbft::{NetworkInfo, SourcedMessage, Target, TargetedMessage};
- use rand::{thread_rng, Rng};
- use std::collections::{BTreeMap, BTreeSet, VecDeque};
- use std::iter::once;
- use std::sync::Arc;
+/// Very basic secret key usage.
+fn main() {
+    let sk0: SecretKey = rand::random();
+    let sk1: SecretKey = rand::random();
 
- fn main() -> Result<(), Error> {
-     // Our simulated network has seven nodes in total, node 3 is the proposer.
-     const NUM_NODES: u64 = 7;
-     const PROPOSER_ID: u64 = 3;
+    let pk0 = sk0.public_key();
 
-     let mut rng = thread_rng();
+    let msg0 = b"Real news";
+    let msg1 = b"Fake news";
 
-     // Create a random set of keys for testing.
-     let netinfos = NetworkInfo::generate_map(0..NUM_NODES, &mut rng)
-         .expect("Failed to create `NetworkInfo` map");
+    assert!(pk0.verify(&sk0.sign(msg0), msg0));
+    assert!(!pk0.verify(&sk1.sign(msg0), msg0)); // Wrong key.
+    assert!(!pk0.verify(&sk0.sign(msg1), msg0)); // Wrong message.
+}
+```
 
-     // Create initial nodes by instantiating a `Broadcast` for each.
-     let mut nodes = BTreeMap::new();
-     for (i, netinfo) in netinfos {
-         let bc = Broadcast::new(Arc::new(netinfo), PROPOSER_ID)?;
-         nodes.insert(i, bc);
-     }
+### Testing
 
-     // First we generate a random payload.
-     let mut payload: Vec<_> = vec![0; 128];
-     rng.fill_bytes(&mut payload[..]);
+Run tests using the following command:
 
-     // Define a function for handling one step of a `Broadcast` instance. This function appends new
-     // messages onto the message queue and checks whether each node outputs at most once and the
-     // output is correct.
-     let on_step = |id: u64,
-                    step: Step<u64>,
-                    messages: &mut VecDeque<SourcedMessage<TargetedMessage<_, _>, _>>,
-                    finished_nodes: &mut BTreeSet<u64>| {
-         // Annotate messages with the sender ID.
-         messages.extend(step.messages.into_iter().map(|msg| SourcedMessage {
-             source: id,
-             message: msg,
-         }));
-         if !step.output.is_empty() {
-             // The output should be the same as the input we gave to the proposer.
-             assert!(step.output.iter().eq(once(&payload)));
-             // Every node should output exactly once. Here we check the first half of this
-             // statement, namely that every node outputs at most once.
-             assert!(finished_nodes.insert(id));
-         }
-     };
+```
+$ cargo test
+```
 
-     let mut messages = VecDeque::new();
-     let mut finished_nodes = BTreeSet::new();
+### Examples
 
-     // Now we can start the algorithm, its input is the payload.
-     let initial_step = {
-         let proposer = nodes.get_mut(&PROPOSER_ID).unwrap();
-         proposer.broadcast(payload.clone()).unwrap()
-     };
-     on_step(
-         PROPOSER_ID,
-         initial_step,
-         &mut messages,
-         &mut finished_nodes,
-     );
+Run examples from the [`examples`](examples) directory using:
 
-     // The message loop: The network is simulated by passing messages around from node to node.
-     while let Some(SourcedMessage {
-         source,
-         message: TargetedMessage { target, message },
-     }) = messages.pop_front()
-     {
-         match target {
-             Target::All => {
-                 for (id, node) in &mut nodes {
-                     let step = node.handle_message(&source, message.clone())?;
-                     on_step(*id, step, &mut messages, &mut finished_nodes);
-                 }
-             }
-             Target::Node(id) => {
-                 let step = {
-                     let node = nodes.get_mut(&id).unwrap();
-                     node.handle_message(&source, message)?
-                 };
-                 on_step(id, step, &mut messages, &mut finished_nodes);
-             }
-         };
-     }
-     // Every node should output exactly once. Here we check the second half of this statement,
-     // namely that every node outputs.
-     assert_eq!(finished_nodes, nodes.keys().cloned().collect());
-     Ok(())
- }
- ```
+```
+$ cargo run --example <example name>
+```
 
-mod broadcast;
-mod error;
-pub(crate) mod merkle;
-mod message;
+Also see the
+[distributed_key_generation](https://github.com/poanetwork/threshold_crypto/blob/d81953b55d181311c2a4eed2b6c34059fcf3fdae/src/poly.rs#L967)
+test.
 
-pub use self::broadcast::{Broadcast, Step};
-pub use self::error::{Error, Result};
-pub use self::message::Message;
+## Application Details
+
+The basic usage outline is:
+* choose a threshold value `t`
+* create a key set
+* distribute `N` secret key shares among the participants
+* publish the public master key
+
+A third party can now encrypt a message to the public master key
+and any set of `t + 1` participants *(but no fewer!)* can collaborate to
+decrypt it. Also, any set of `t + 1` participants can collaborate to sign a message,
+producing a signature that is verifiable with the public master key.
+
+In this system, a signature is unique and independent of
+the set of participants that produced it. If `S1` and `S2` are
+signatures for the same message, produced by two different sets of `t + 1`
+secret key share holders, both signatures will be valid AND
+equal. This is useful in some applications, for example a message signature can serve as a pseudorandom number unknown to anyone until `t + 1` participants agree to reveal it.
+
+In its simplest form, threshold_crypto requires a trusted dealer to
+produce and distribute the secret key shares. However, keys can be produced so that only the corresponding participant knows their secret in the end.  This crate
+includes the basic tools to implement such a *Distributed Key Generation*
+scheme.
+
+A major application for this library is within a distributed network that
+must tolerate up to `t` adversarial (malicious or faulty) nodes. Because `t +
+1` nodes are required to sign or reveal information, messages can be trusted
+by third-parties as representing the consensus of the network.
+
+### Documentation
+
+* [crate documentation](https://docs.rs/threshold_crypto/)
+* [crates.io package](https://crates.io/crates/threshold_crypto) 
+
+## Performance
+
+Benchmarking functionality is kept in the [`benches` directory](benches). You
+can run the benchmarks with the following command:
+
+```
+$ RUSTFLAGS="-C target_cpu=native" cargo bench
+```
+
+We use the [`criterion`](https://crates.io/crates/criterion) benchmarking library.
+
+### Mock cryptography
+
+To speed up automatic tests of crates depending on `threshold_crypto`, the `use-insecure-test-only-mock-crypto` feature is available. **Activating this feature will effectively disable encryption and should only be used during tests!**. Essentially, the underlying elliptic curves will be replaced by small finite fields, yielding a 10-200X speed-up in execution. The resulting ciphers can be trivially broken in a number of ways and should never be used in production.
+
+## License
+
+Licensed under either of:
+
+* Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contributing
+
+See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and
+pull request protocol.
+
+Unless you explicitly state otherwise, any contribution intentionally
+submitted for inclusion in the work by you, as defined in the Apache-2.0
+license, shall be dual licensed as above, without any additional terms or
+conditions.

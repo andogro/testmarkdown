@@ -1,22 +1,4 @@
-# threshold_crypto
-
-[![Build Status](https://travis-ci.org/poanetwork/threshold_crypto.svg?branch=master)](https://travis-ci.org/poanetwork/threshold_crypto)
-
-A pairing-based threshold cryptosystem for collaborative decryption and
-signatures.
-
-The `threshold_crypto` crate provides constructors for encrypted message handling. It utilizes the [`pairing`](https://crates.io/crates/pairing) elliptic curve library to create and enable reconstruction of public and private key shares.
-
-In a network environment, messages are signed and encrypted, and key and
-signature shares are distributed to network participants. A message can be
-decrypted and authenticated only with cooperation from at least `threshold +
-1` nodes.
-
-## Security Audit
-
-An [official security audit](https://github.com/poanetwork/wiki/wiki/Threshold-Crypto-Audit) has been completed on `threshold_crypto` by [Jean-Philippe Aumasson](https://aumasson.jp/). No exploitable security issues were found, and potential improvements have been addressed. Dependency updates mentioned in the audit were completed in [a5c3785ed8d6a35868bc169f07e40e889087fd2e] with the exception of rand, which is currently pinned to version 0.4 (see https://github.com/poanetwork/hbbft/issues/145 for details).
-
-b41dc785ab6e438040daf62f56190862a218b71f
+An [official security audit](https://github.com/poanetwork/wiki/wiki/Threshold-Crypto-Audit) has been completed on `threshold_crypto` by [Jean-Philippe Aumasson](https://aumasson.jp/). No exploitable security issues were found, and potential improvements have been addressed. Outdated dependencies mentioned in the audit were updated in commit[54026f5](https://github.com/poanetwork/threshold_crypto/commit/54026f5fe7e0b5a52e446ac01a50469da1f15a71) with the exception of `rand`, which is currently pinned to version 0.4 (see [hbbft issue #145](https://github.com/poanetwork/hbbft/issues/145) for more information).
 
 ## Usage
 

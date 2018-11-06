@@ -79,7 +79,7 @@ When debugging block verification failures, we have found [etherscan] tools extr
 
 We can look at the [block information], and dive into the [transaction
 information]. From that page, the "Tools & Utilities" dropdown provides useful debugging tools. Two of the most valuable are [Geth DebugTrace] and
-[Remix Debugger],
+[Remix Debugger].
 
 - `Geth DebugTrace` allows us to compare each operation and its gas consumption
   against our implementation.
@@ -91,14 +91,14 @@ NOTE: for the `Remix Debugger`, you may want to add the block number at the top
 before pressing the play button.
 
 To log the operation, gas consumption, and stack in our application, please see
-the EVM README's [example setup].
+the EVM README [example setup].
 
 [etherscan]: https://etherscan.io/
 [block information]: https://etherscan.io/block/177610
 [transaction information]: https://etherscan.io/tx/0x7f79a541615694029d845e31f2f362484679c1b9a3fd8588822a33a0e13383f4
 [geth debugtrace]: https://etherscan.io/vmtrace?txhash=0x7f79a541615694029d845e31f2f362484679c1b9a3fd8588822a33a0e13383f4
 [remix debugger]: http://etherscan.io/remix?txhash=0x7f79a541615694029d845e31f2f362484679c1b9a3fd8588822a33a0e13383f4
-[example setup]: https://github.com/poanetwork/mana/tree/master/apps/evm#example-setup
+[example setup]: https://github.com/mana-ethereum/mana/tree/master/apps/evm#example-setup
 
 # Testing
 
@@ -166,20 +166,17 @@ The Ethereum common tests are in a submodule. To update you'll want to:
 | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Encoding and Hashing                                                                | The [RLP] encoding protocol and the [Merkle Patricia Tree] data structure are fully implemented.                                                                                                                                                                                                                                                                                                                                                                                                       |
 | [Ethereum Virtual Machine] | Our EVM currently passes 100% of the common [VM tests]. We are still discovering subtle differences in our implementation such as the [“vanishing Ether” issue]. This component is for the most part complete.                                                                                                                                                                                                                                                       |
-| Peer to Peer Networking                                                             | Currently we can connect to one of the Ethereum bootnodes, get a list of peers, and add them to a list of known peers. We have fully implemented the modified [kademlia DHT]. <br /><br />We can also successfully perform the encrypted handshake with peer nodes and derive secrets to frame the rest of the messages. We have not yet implemented the ability to send [multi-frame packets]. See Issue [#97]. |
-| DEVp2p Protocol and Ethereum Wire Protocol                                          | These are partially implemented but need to be completed. See Issue [#166] and Issue [#167].                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Peer to Peer Networking                                                             | Currently we can connect to one of the Ethereum bootnodes, get a list of peers, and add them to a list of known peers. We have fully implemented the modified [kademlia DHT]. <br /><br />We can also successfully perform the encrypted handshake with peer nodes and derive secrets to frame the rest of the messages. We are currently configuring ExWire to work against a local Geth/Parity node. |
+| DEVp2p Protocol and Ethereum Wire Protocol                                          | We are in the process of addressing networking layer issues. Progress is being tracked in Issue [#407].                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 [RLP]: https://hex.pm/packages/ex_rlp
-[Merkle Patricia Tree]: https://github.com/poanetwork/mana/tree/master/apps/merkle_patricia_tree
-[Ethereum Virtual Machine]: https://github.com/poanetwork/mana/tree/master/apps/evm
+[Merkle Patricia Tree]: https://github.com/mana-ethereum/mana/tree/master/apps/merkle_patricia_tree
+[Ethereum Virtual Machine]: https://github.com/mana-ethereum/mana/tree/master/apps/evm
 [VM tests]: https://github.com/ethereum/tests/tree/develop/VMTests
-[“vanishing Ether” issue]: https://github.com/poanetwork/mana/commit/aa3056efe341dd548a750c6f5b4c8962ccef2518
-[kademlia DHT]: https://github.com/poanetwork/mana/tree/master/apps/ex_wire/lib/ex_wire/kademlia
+[“vanishing Ether” issue]: https://github.com/mana-ethereum/mana/commit/aa3056efe341dd548a750c6f5b4c8962ccef2518
+[kademlia DHT]: https://github.com/mana-ethereum/mana/tree/master/apps/ex_wire/lib/ex_wire/kademlia
 [multi-frame packets]: https://github.com/ethereum/devp2p/blob/master/rlpx.md#framing
-[#97]: https://github.com/poanetwork/mana/issues/97
-[#166]: https://github.com/poanetwork/mana/issues/166
-[#167]: https://github.com/poanetwork/mana/issues/167
-
+[#407]: https://github.com/mana-ethereum/mana/issues/407
 
 # Documentation
 

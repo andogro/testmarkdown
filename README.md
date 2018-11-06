@@ -16,7 +16,7 @@ decrypted and authenticated only with cooperation from at least `threshold +
 
 An [official security audit](https://github.com/poanetwork/wiki/wiki/Threshold-Crypto-Audit) has been completed on `threshold_crypto` by [Jean-Philippe Aumasson](https://aumasson.jp/). No exploitable security issues were found, and potential improvements have been addressed. Dependency updates mentioned in the audit were completed in [a5c3785ed8d6a35868bc169f07e40e889087fd2e] with the exception of rand, which is currently pinned to version 0.4 (see https://github.com/poanetwork/hbbft/issues/145 for details).
 
-https://github.com/jlord/sheetsee.js/issues/26
+https://github.com/andogro/testmarkdown/commit/b41dc785ab6e438040daf62f56190862a218b71f
 
 ## Usage
 

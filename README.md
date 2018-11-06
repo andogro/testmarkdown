@@ -68,7 +68,7 @@ that impacted Ethereum in late 2016. We are currently synced to ~ block [2469000
 - Ropsten fails on block [2444903] with `receipts_root_mismatch`,
   `gas_used_mismatch` and `state_root_mismatch` errors - see [#580].
 
-[transaction spam attack]:https://blog.ethereum.org/2016/09/22/transaction-spam-attack-next-steps/
+[transaction spam attack]: https://blog.ethereum.org/2016/09/22/transaction-spam-attack-next-steps/
 [2469000]: https://etherscan.io/block/2,469,000
 [2444903]: https://ropsten.etherscan.io/txs?block=2444903
 [#580]: https://github.com/mana-ethereum/mana/issues/580
@@ -130,7 +130,7 @@ cd apps/blockchain && mix test test/blockchain/transaction_test.exs
 
 Ethereum common tests are created for all clients to test against. See the [common test documentation] for more information.
 
-[VMTests](https://github.com/ethereum/tests/tree/develop/VMTests/vmTests) = 100% passing
+[VMTests] = 100% passing
 
 | Hardfork          | [BlockchainTests] passing | [GeneralStateTests] passing | Complete? |
 | ----------------- | ------------------------- | --------------------------- | --------- |
@@ -164,10 +164,22 @@ The Ethereum common tests are in a submodule. To update you'll want to:
 
 | Functionality                                                                       | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Encoding and Hashing                                                                | The [RLP](https://hex.pm/packages/ex_rlp) encoding protocol and the [Merkle Patricia Tree](https://github.com/poanetwork/mana/tree/master/apps/merkle_patricia_tree) data structure are fully implemented.                                                                                                                                                                                                                                                                                                                                                                                                       |
-| [Ethereum Virtual Machine](https://github.com/poanetwork/mana/tree/master/apps/evm) | Our EVM currently passes 100% of the common [VM tests](https://github.com/ethereum/tests/tree/develop/VMTests). We are still discovering subtle differences in our implementation such as the [“vanishing Ether” issue](https://github.com/poanetwork/mana/commit/aa3056efe341dd548a750c6f5b4c8962ccef2518). This component is for the most part complete.                                                                                                                                                                                                                                                       |
-| Peer to Peer Networking                                                             | Currently we can connect to one of the Ethereum bootnodes, get a list of peers, and add them to a list of known peers. We have fully implemented the modified [kademlia DHT](https://github.com/poanetwork/mana/tree/master/apps/ex_wire/lib/ex_wire/kademlia). <br /><br />We can also successfully perform the encrypted handshake with peer nodes and derive secrets to frame the rest of the messages. We have not yet implemented the ability to send [multi-frame packets](https://github.com/ethereum/devp2p/blob/master/rlpx.md#framing). See Issue [#97](https://github.com/poanetwork/mana/issues/97). |
-| DEVp2p Protocol and Ethereum Wire Protocol                                          | These are partially implemented but need to be completed. See Issue [#166](https://github.com/poanetwork/mana/issues/166) and Issue [#167](https://github.com/poanetwork/mana/issues/167).                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Encoding and Hashing                                                                | The [RLP] encoding protocol and the [Merkle Patricia Tree] data structure are fully implemented.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| [Ethereum Virtual Machine] | Our EVM currently passes 100% of the common [VM tests]. We are still discovering subtle differences in our implementation such as the [“vanishing Ether” issue]. This component is for the most part complete.                                                                                                                                                                                                                                                       |
+| Peer to Peer Networking                                                             | Currently we can connect to one of the Ethereum bootnodes, get a list of peers, and add them to a list of known peers. We have fully implemented the modified [kademlia DHT]. <br /><br />We can also successfully perform the encrypted handshake with peer nodes and derive secrets to frame the rest of the messages. We have not yet implemented the ability to send [multi-frame packets]. See Issue [#97]. |
+| DEVp2p Protocol and Ethereum Wire Protocol                                          | These are partially implemented but need to be completed. See Issue [#166] and Issue [#167].                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+[RLP]: https://hex.pm/packages/ex_rlp
+[Merkle Patricia Tree]: https://github.com/poanetwork/mana/tree/master/apps/merkle_patricia_tree
+[Ethereum Virtual Machine]: https://github.com/poanetwork/mana/tree/master/apps/evm
+[VM tests]: https://github.com/ethereum/tests/tree/develop/VMTests
+[“vanishing Ether” issue]: https://github.com/poanetwork/mana/commit/aa3056efe341dd548a750c6f5b4c8962ccef2518
+[kademlia DHT]: https://github.com/poanetwork/mana/tree/master/apps/ex_wire/lib/ex_wire/kademlia
+[multi-frame packets]: https://github.com/ethereum/devp2p/blob/master/rlpx.md#framing
+[#97]: https://github.com/poanetwork/mana/issues/97
+[#166]: https://github.com/poanetwork/mana/issues/166
+[#167]: https://github.com/poanetwork/mana/issues/167
+
 
 # Documentation
 
@@ -192,6 +204,8 @@ at your option.
 
 See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
 
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+
 # References
 
 - [Ethereum yellow paper](https://ethereum.github.io/yellowpaper/paper.pdf)(Ethereum: A Secure Decentralised Generalised Transaction Ledger Byzantium Version)
@@ -204,3 +218,4 @@ Additional Ethereum Implementations
 - [Go-Ethereum (Geth)](https://github.com/ethereum/go-ethereum/)
 - [EthereumJS](https://github.com/ethereumjs/ethereumjs-vm)
 - [Py-EVM](https://github.com/ethereum/py-evm)
+- [Pantheon](https://github.com/PegaSysEng/pantheon)

@@ -35,9 +35,9 @@ Please see the following posts for more details:
 
 - **[Dynamic Honey Badger](src/dynamic_honey_badger/dynamic_honey_badger.rs):** A modified Honey Badger where nodes can dynamically add and remove other nodes to/from the network.
 
-- **[Queueing Honey Badger](src/queueing_honey_badger.rs):** Works exactly like Dynamic Honey Badger, but includes a built in transaction queue.
+- **[Queueing Honey Badger](src/queueing_honey_badger/mod.rs):** Works exactly like Dynamic Honey Badger, but includes a built in transaction queue.
 
-- **[Subset](src/subset.rs):** Each node inputs data. The nodes agree on a subset of suggested data.
+- **[Subset](src/subset/subset.rs):** Each node inputs data. The nodes agree on a subset of suggested data.
 
 - **[Broadcast](src/broadcast/broadcast.rs):** A proposer node inputs data and every node receives this output.
 
@@ -46,7 +46,7 @@ Please see the following posts for more details:
 - **[Threshold Sign](src/threshold_sign.rs):**
   Each node inputs the same data to be signed, and outputs the unique valid signature matching the public master key. It is used as a pseudorandom value in the Binary Agreement protocol.
 
-- **[Threshold Decryption](src/threshold_decryption.rs):**
+- **[Threshold Decryption](src/threshold_decrypt.rs):**
   Each node inputs the same ciphertext, encrypted to the public master key, and outputs the decrypted data.
 
 - **[Synchronous Key Generation](src/sync_key_gen.rs)** A dealerless algorithm that generates keys for threshold encryption and signing. Unlike the other algorithms, this one is _completely synchronous_ and should run on top of Honey Badger (or another consensus algorithm)
@@ -55,12 +55,6 @@ Please see the following posts for more details:
 
 - **[Threshold Crypto](https://github.com/poanetwork/threshold_crypto):** A threshold cryptosystem for collaborative message decryption and signature creation.
 
-
-### Honey Badger Visualization
-
-![Screenshot](assets/honey_bdager_diagram.svg)
-
-![HBBFT](images/hb2.svg)
 
 ## Getting Started
 
@@ -176,6 +170,11 @@ We have simplified algorithm naming conventions from the original paper.
   * [Rust](https://github.com/rphmeier/honeybadger) - unfinished implementation
 
 
+### Honey Badger Visualization
+
+![Screenshot](assets/honey_badger_diagram.svg)
+
+
 ## Contributing
 
 See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
@@ -188,8 +187,5 @@ Licensed under either of:
 * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
-
-
-
 
 

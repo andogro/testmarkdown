@@ -11,7 +11,7 @@
 - [How do I run Mana-Ethereum?](#how-do-i-run-mana-ethereum)
 - [How do I test?](#how-do-i-test)
 - [Can I use Mana-Ethereum to mine Ether?](#can-i-use-mana-ethereum-to-mine-ether)
-- [Where can I learn more about Ethereum, the yellow paper etc.?](#where-can-i-learn-more-about-etherem-the-yellow-paper-etc)
+- [Where can I learn more about Ethereum, the yellow paper etc.?](#where-can-i-learn-more-about-ethereum)
 - [How can I contribute to the project?](#how-can-i-contribute-to-the-project)
 
 ## What is Mana-Ethereum?
@@ -22,7 +22,7 @@ The client must follow the specifications described in the [Ethereum Yellow Pape
 
 The project is a [collaborative effort](https://medium.com/poa-network/poa-network-compound-and-consensys-announce-collaboration-on-ethereum-client-written-in-elixir-b265d048402) between [Compound](https://compound.finance/), [ConsenSys](https://consensys.net/), and [POA Network](https://poa.network/) designed to create a reliable, efficient, and easy-to-use EVM client.
 
-### What are the project goals?
+## What are the project goals?
 
 In the short term, our goal is to create a fully functional client comparable to Geth or Parity that can run day-to-day tasks on a network node. Once operational, we have several longer-term goals for this project.
 
@@ -34,7 +34,9 @@ In the short term, our goal is to create a fully functional client comparable to
 
 **Parallelize transactions:** Rather than relying on strictly sequential transactions, we will explore using [optimistic concurrency control](https://en.wikipedia.org/wiki/Optimistic_concurrency_control) to process transactions in parallel, further optimizing the speed and efficiency of the client.
 
-## What differentiates Mana from other Ethereum clients? What makes Mana-Ethereum unique?
+## What differentiates Mana from other Ethereum clients?
+
+**What makes Mana-Ethereum unique?**
 
 Mana-Ethereum’s vision is to create a fast, low-memory node that is easy to setup and functions optimally in a variety of environments.  We are creating a highly modular, well-documented client to promote transparency in the codebase and encourage collaboration. A point of emphasis with Mana-Ethereum is on reliability and near constant uptime. We believe these improvements will differentiate us from the current group of EVM clients.
 
@@ -71,10 +73,10 @@ We are focusing our initial efforts to sync with the Ropsten testnet and the Eth
 
 ## What prerequisites are required to run Mana-Ethereum?
 
-Software  
-Elixir ~> 1.7.4
+**Software**  
+- Elixir ~> 1.7.4
 
-Hardware 
+**Hardware** 
 - We recommend atleast 4 GB RAM. 
 - Disk space needs are based on the network size. To sync with the Ethereum Mainnet, we recommend 2 TB for the full archive. 
 
@@ -92,7 +94,7 @@ Testing methods including running Ethereum Common tests are located in the proje
 
 Mining is not supported. Our focus is on optimizing day-to-day operations such as reading and creating transactions, connecting to the network, and syncing the blockchain in a fast, efficient manner.  
 
-## Where can I learn more about Ethereum, the yellow paper etc.?
+## Where can I learn more about Ethereum?
 
 There are many resources available, the best place to start is on the [Ethereum foundation website](https://www.ethereum.org/). Additional resources include:
 

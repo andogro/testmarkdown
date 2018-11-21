@@ -14,7 +14,7 @@
 - [Where can I learn more about Ethereum, the yellow paper etc.?](#where-can-i-learn-more-about-etherem-the-yellow-paper-etc)
 - [How can I contribute to the project?](#how-can-i-contribute-to-the-project)
 
-### What is Mana-Ethereum?
+## What is Mana-Ethereum?
 
 Mana-Ethereum is an open-source Ethereum client written in [Elixir](https://elixir-lang.org/). An Ethereum client implements the Ethereum Virtual Machine (EVM), allowing the network node running the client to interact with the Ethereum blockchain and/or associated testnets and sidechains. 
 
@@ -34,13 +34,13 @@ In the short term, our goal is to create a fully functional client comparable to
 
 **Parallelize transactions:** Rather than relying on strictly sequential transactions, we will explore using [optimistic concurrency control](https://en.wikipedia.org/wiki/Optimistic_concurrency_control) to process transactions in parallel, further optimizing the speed and efficiency of the client.
 
-### What differentiates Mana from other Ethereum clients? What makes Mana-Ethereum unique?
+## What differentiates Mana from other Ethereum clients? What makes Mana-Ethereum unique?
 
 Mana-Ethereum’s vision is to create a fast, low-memory node that is easy to setup and functions optimally in a variety of environments.  We are creating a highly modular, well-documented client to promote transparency in the codebase and encourage collaboration. A point of emphasis with Mana-Ethereum is on reliability and near constant uptime. We believe these improvements will differentiate us from the current group of EVM clients.
 
 Elixir provides us with tools and means to realize this vision. See Why use Elixir below for more information on our choice to leverage this optimized programming language.
 
-### Why use Elixir?
+## Why use Elixir?
 
 We are choosing to implement Mana-Ethereum using Elixir for several reasons.
 
@@ -54,13 +54,13 @@ We are choosing to implement Mana-Ethereum using Elixir for several reasons.
 
 **Efficiency:**  Elixir supports concise, easy-to-maintain code. Applications are highly modular, which is useful for a protocol with many different moving parts and wide-ranging functionality. Elixir is also designed to be more readable than Erlang. This creates fewer bugs and a faster ramp-up time for new developers.
 
-### What is the current project status?
+## What is the current project status?
 
 With the recently announced collaboration, the team has expanded and progress is happening quickly. We are currently passing 100% of the [Ethereum Common Tests](https://github.com/ethereum/tests) and rapidly closing in on a full Ropsten and mainnet syncs. Updated progress is available in the project [README](https://github.com/mana-ethereum/mana).
 
 Currently, a main focus is on the ex-wire networking layer and peer to peer connection protocols (devp2p) which will enable a Mana-Ethereum node to discover and connect to other nodes, request blocks, and sync the blockchain with other nodes in the network.
 
-### Which chains will Mana-Ethereum support? 
+## Which chains will Mana-Ethereum support? 
 
 We are focusing our initial efforts to sync with the Ropsten testnet and the Ethereum mainnet. After these are synced, phase 2 will involve syncs with the following chains:
 - Ethereum testnets
@@ -69,7 +69,7 @@ We are focusing our initial efforts to sync with the Ropsten testnet and the Eth
 - POA Network
 - PoA based private chains and sidechains
 
-### What prerequisites are required to run Mana-Ethereum?
+## What prerequisites are required to run Mana-Ethereum?
 
 Software  
 Elixir ~> 1.7.4
@@ -78,21 +78,21 @@ Hardware
 - We recommend atleast 4 GB RAM. 
 - Disk space needs are based on the network size. To sync with the Ethereum Mainnet, we recommend 2 TB for the full archive. 
 
-### How do I run Mana-Ethereum?
+## How do I run Mana-Ethereum?
 
 We have a command line interface available for syncing a chain from an RPC client (e.g. Infura) or a local client. Information and instructions are available on the [CLI application page](https://github.com/mana-ethereum/mana/tree/master/apps/cli). The basic command is currently run as a mix task:
 
 ```mana> mix sync --chain ropsten```
 
-### How do I test?
+## How do I test?
 
 Testing methods including running Ethereum Common tests are located in the project [README](https://github.com/mana-ethereum/mana#Testing).
 
-### Can I use Mana-Ethereum to mine Ether?
+## Can I use Mana-Ethereum to mine Ether?
 
 Mining is not supported. Our focus is on optimizing day-to-day operations such as reading and creating transactions, connecting to the network, and syncing the blockchain in a fast, efficient manner.  
 
-### Where can I learn more about Ethereum, the yellow paper etc.?
+## Where can I learn more about Ethereum, the yellow paper etc.?
 
 There are many resources available, the best place to start is on the [Ethereum foundation website](https://www.ethereum.org/). Additional resources include:
 

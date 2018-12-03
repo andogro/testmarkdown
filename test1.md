@@ -1,12 +1,6 @@
 ## What is a VDF?
 
-A Verifiable Delay Function (VDF) is a function that requires substantial time to evaluate but can be quickly verified as correct. VDFs can be used to construct randomness beacons with multiple applications in a distributed network environment. By introducing a time delay during evaluation, VDFs prevent malicious actors from influencing output. Output cannot be differentiated from a random number until the final result is computed. 
-
-A VDF consists of a tuple of functions:
-
-* `Prepare`: Takes a security parameter and a difficulty parameter `n` and generates public parameters for use by `Eval` and `Verify`.
-* `Eval`: Evaluates the function sequentially. Eval requires a completion time proportional to `n`, even when computed on a polynomial number of parallel processors.
-* `Verify`: Verifies `Eval` was computed correctly, and only takes log(`n`) time to complete.
+A Verifiable Delay Function (VDF) is a function that requires substantial time to evaluate (even with a polynomial number of parallel processors) but can be very quickly verified as correct. VDFs can be used to construct randomness beacons with multiple applications in a distributed network environment. By introducing a time delay during evaluation, VDFs prevent malicious actors from influencing output. Output cannot be differentiated from a random number until the final result is computed. 
 
 See https://eprint.iacr.org/2018/712.pdf for more details.
 
@@ -25,49 +19,49 @@ This repo includes three crates:
 ## Usage
 
 - Install Rust <https://doc.rust-lang.org/cargo/getting-started/installation.html>
+<!--- Any Version?
+--->
 
 - Install the  GNU Multiple Precision Library<https://gmplib.org/>
 ```
 sudo apt-get install -y libgmp-dev
 ```
 - Download and prepare the repository
-```
-git clone https://github.com/poanetwork/vdf.git
-cd vdf
-cargo install
-```
+   ```
+   $ git clone https://github.com/poanetwork/vdf.git
+   $ cd vdf
+   $cargo install
+   ```
 
 ### Command Line Interface
 
-To initiate `Eval`, use the `vdf-cli` command followed by 2 arguments.
+To initiate, use the `vdf-cli` command followed by 2 arguments.
+
+- challenge: a byte string of arbitrary length
+- difficulty: number of iterations, each iteration requires more time to evaluate
+
 <!---
-- aa - security parameter?
-- 100 - difficulty parameter - is this time in ms?
+-Is this the wesolowski proof of time, are there ways to run the other proofs?
 --->
 
-You will see the functional output
+Once complete you will see the output,returned as a `Vec<u8>`.
 
 Example
 ```
-vdf-cli aa 100
+$ vdf-cli aa 100
 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
 ```
-To `Verify`, use the `vdi-cli` command with the same arguments and include the output.
+To verify, use the `vdi-cli` command with the same arguments and include the output.
 
 Example
 ```
-vdf-cli aa 100 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
+$ vdf-cli aa 100 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
 Proof is valid
 ```
 
 ### VDF Library
-
 <!---
-Same for fn main(), can you briefly give example of the params used.
-for example
-2048
-b"\xaa"
-100
+Keep as is, and possibly include argument explanations as well (for byte_length for example). May not be needed though is CLI is main user interaction tool.
 --->
 
 ## Benchmarks
@@ -75,8 +69,8 @@ b"\xaa"
 Benchmarks are provided for the classgroup operations. To run benchmarks:
 
 ```
-cd vdf/classgroup
-cargo bench
+$ cd vdf/classgroup
+$ cargo bench
 ```
 
 Additional benchmarks are under development.
@@ -91,5 +85,5 @@ Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/L
 
 <!---
 Note - According to contest rules all source code must be made in pursuant to the terms of the Apache license. 
-You Can copy and include LICENSE-APACHE from threshold-crypto crate. Not sure about MIT license, I can ask Andreas.
+You can copy and include LICENSE-APACHE from threshold-crypto crate. Not sure about MIT license, lets confirm.
 --->

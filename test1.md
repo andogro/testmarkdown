@@ -6,7 +6,7 @@ A VDF consists of a tuple of functions:
 
 * `Prepare`: Takes a security parameter and a difficulty parameter `n` and generates public parameters for use by `Eval` and `Verify`.
 * `Eval`: Evaluates the function sequentially. Eval requires a completion time proportional to `n`, even when computed on a polynomial number of parallel processors.
-* `Verify`: Verifies `Eval` was computed correctly, and only takes log(n) time to complete.
+* `Verify`: Verifies `Eval` was computed correctly, and only takes log(`n`) time to complete.
 
 See https://eprint.iacr.org/2018/712.pdf for more details.
 
@@ -40,8 +40,10 @@ cargo install
 ### Command Line Interface
 
 To initiate `Eval`, use the `vdf-cli` command followed by 2 arguments.
-\\ aa - security parameter?
-\\ 100 - difficulty parameter - is this time in ms?
+<!---
+- aa - security parameter?
+- 100 - difficulty parameter - is this time in ms?
+--->
 
 You will see the functional output
 
@@ -60,10 +62,13 @@ Proof is valid
 
 ### VDF Library
 
-\\Same for fn main(), can you briefly give example of the params used.
-\\for example the 2048,
-\\b"\xaa"
-\\100
+<!---
+Same for fn main(), can you briefly give example of the params used.
+for example
+2048
+b"\xaa"
+100
+--->
 
 ## Benchmarks
 
@@ -77,11 +82,14 @@ cargo bench
 Additional benchmarks are under development.
 
 ### Current Benchmarks
-\\ Include table, similar to https://github.com/Chia-Network/vdf-competition#benchmarks
-
+<!---
+Include table, similar to https://github.com/Chia-Network/vdf-competition#benchmarks
+--->
 ## License
 
 Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
 
-\\ Note - According to contest rules all source code must be made in pursuant to the terms of the Apache license. 
-\\ You Can copy and include LICENSE-APACHE from threshold-crypto crate. Not sure about MIT license, I can ask Andreas.
+<!---
+Note - According to contest rules all source code must be made in pursuant to the terms of the Apache license. 
+You Can copy and include LICENSE-APACHE from threshold-crypto crate. Not sure about MIT license, I can ask Andreas.
+--->

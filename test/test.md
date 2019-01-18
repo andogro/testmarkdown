@@ -4,6 +4,12 @@
 [![Build Status](https://travis-ci.org/poanetwork/token-bridge.svg)](https://travis-ci.org/poanetwork/token-bridge)
 [![Gitter](https://badges.gitter.im/poanetwork/poa-bridge.svg)](https://gitter.im/poanetwork/poa-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+The TokenBridge is deployed on specified validator nodes (only nodes whose private keys correspond to addresses specified in the smart contracts) in the network. It connects to two chains via a Remote Procedure Call (RPC). It is responsible for:
+- listening to events related to bridge contracts
+- sending transactions to authorize asset transfers
+
+Following is an overview of the TokenBridge and [instructions for getting started](#how-to-use).
+
 ## POA General Bridge Overview
 
 A POA Bridge allows users to transfer assets between two chains in the Ethereum ecosystem. It is composed of several elements which are located in different POA Network repositories:
@@ -15,15 +21,7 @@ A POA Bridge allows users to transfer assets between two chains in the Ethereum 
 4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
 5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments.
 
-## POA TokenBridge
-
-The TokenBridge is deployed on specified validator nodes (only nodes whose private keys correspond to addresses specified in the smart contracts) in the network. It connects to two chains via a Remote Procedure Call (RPC). It is responsible for:
-- listening to events related to bridge contracts
-- sending transactions to authorize asset transfers
-
-Following is an overview of the TokenBridge and [instructions for getting started](#how-to-use).
-
-### Network Definitions
+## Network Definitions
 
  Bridging occurs between two networks.
 
@@ -31,14 +29,13 @@ Following is an overview of the TokenBridge and [instructions for getting starte
 
 * **Foreign** can be any chain; generally it refers to the Ethereum mainnet. 
 
-### Operational Modes
+## Operational Modes
 
 The POA TokenBridge provides three operational modes:
 
 - [x] `Native-to-ERC20` **Coins** on a Home network can be converted to ERC20-compatible **tokens** on a Foreign network. Coins are locked on the Home side and the corresponding amount of ERC20 tokens are minted on the Foreign side. When the operation is reversed, tokens are burnt on the Foreign side and unlocked in the Home network. _More Information: [POA-to-POA20 Bridge](https://medium.com/poa-network/introducing-poa-bridge-and-poa20-55d8b78058ac)_
 - [x] `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B". _More Information: [ERC20-to-ERC20](https://medium.com/poa-network/introducing-the-erc20-to-erc20-tokenbridge-ce266cc1a2d0)_
 - [x] `ERC20-to-Native`: Pre-existing **tokens** in the Foreign network are locked and **coins** are minted in the `Home` network. In this mode, the Home network consensus engine invokes [Parity's Block Reward contract](https://wiki.parity.io/Block-Reward-Contract.html) to mint coins per the bridge contract request. _More Information: [xDai Chain](https://medium.com/poa-network/poa-network-partners-with-makerdao-on-xdai-chain-the-first-ever-usd-stable-blockchain-65a078c41e6a)_
-
 
 ## Architecture
 
@@ -50,12 +47,10 @@ The POA TokenBridge provides three operational modes:
 
 ![ERC-to-ERC](ERC-to-ERC.png)
 
-
 ### Watcher
 A watcher listens for a certain event and creates proper jobs in the queue. These jobs contain the transaction data (without the nonce) and the transaction hash for the related event. The watcher runs on a given frequency, keeping track of the last processed block.
 
 If the watcher observes that the transaction data cannot be prepared, which generally means that the corresponding method of the bridge contract cannot be invoked, it inspects the contract state to identify the potential reason for failure and records this in the logs. 
-
 
 There are three Watchers:
 - **Signature Request Watcher**: Listens to `UserRequestForSignature` events on the Home network.
@@ -63,7 +58,6 @@ There are three Watchers:
 - **Affirmation Request Watcher**: Depends on the bridge mode. 
    - `Native-to-ERC20`: Listens to `UserRequestForAffirmation` raised by the bridge contract.
    - `ERC20-to-ERC20` and `ERC20-to-Native`: Listens to `Transfer` events raised by the token contract.
-
 
 ### Sender
 A sender subscribes to the queue and keeps track of the nonce. It takes jobs from the queue, extracts transaction data, adds the proper nonce, and sends it to the network.
@@ -130,7 +124,7 @@ For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues
 
 1. Create a `.env` file: `cp .env.example .env`
 
-2. Fill in the required information using the JSON output data. Check the tables with the [set of parameters](#configuration-parameters) below to see their explanation.
+2. Fill in the required information using the JSON output data. Check the tables with the [set of parameters](#configuration-parameters) below to see their explanation. 
 
 ## Run the Processes
 
@@ -183,7 +177,7 @@ for docker installation respectively, where the _watcher_ could be one of:
 - `collected-signatures`
 - `affirmation-request`
 
-### Configuration parameters
+## Configuration parameters
 
 | Variable | Description | Values |
 |-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
@@ -213,9 +207,9 @@ for docker installation respectively, where the _watcher_ could be one of:
 | `LOG_LEVEL` | Set the level of details in the logs. | `trace` / `debug` / `info` / `warn` / `error` / `fatal` |
 | `MAX_PROCESSING_TIME` | The workers processes will be killed if this amount of time (in milliseconds) is ellapsed before they finish processing. It is recommended to set this value to 4 times the value of the longest polling time (set with the `HOME_POLLING_INTERVAL` and `FOREIGN_POLLING_INTERVAL` variables). To disable this, set the time to 0. | integer |
 
-### Useful Commands for Development
+## Useful Commands for Development
 
-#### RabbitMQ
+### RabbitMQ
 Command | Description
 --- | ---
 `rabbitmqctl list_queues` | List all queues
@@ -223,7 +217,7 @@ Command | Description
 `rabbitmqctl status` | check if rabbitmq server is currently running  
 `rabbitmq-server`    | start rabbitMQ server  
 
-#### Redis
+### Redis
 Use `redis-cli`
 
 Command | Description

@@ -1,219 +1,298 @@
-# How to deploy POA bridge contracts
 
-In order to deploy bridge contracts you must run `npm install` to install all dependencies. For more information, see the [project README](../README.md).
+# POA TokenBridge
 
-1. Compile the source contracts.
+[![Build Status](https://travis-ci.org/poanetwork/token-bridge.svg)](https://travis-ci.org/poanetwork/token-bridge)
+[![Gitter](https://badges.gitter.im/poanetwork/poa-bridge.svg)](https://gitter.im/poanetwork/poa-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+## POA General Bridge Overview
+
+A POA Bridge allows users to transfer assets between two chains in the Ethereum ecosystem. It is composed of several elements which are located in different POA Network repositories:
+
+**Bridge Elements**
+1. The TokenBridge contained in this repository.
+2. [Solidity smart contracts](https://github.com/poanetwork/poa-bridge-contracts). Used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
+3. [Bridge UI Application](https://github.com/poanetwork/bridge-ui). A DApp interface to transfer tokens and coins between chains.
+4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
+5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments.
+
+## POA TokenBridge
+
+The TokenBridge is deployed on specified validator nodes (only nodes whose private keys correspond to addresses specified in the smart contracts) in the network. It connects to two chains via a Remote Procedure Call (RPC). It is responsible for:
+- listening to events related to bridge contracts
+- sending transactions to authorize asset transfers
+
+Following is an overview of the TokenBridge and [instructions for getting started](#how-to-use).
+
+### Network Definitions
+
+ Bridging occurs between two networks.
+
+ * **Home** - or **Native** - is a network with fast and inexpensive operations. All bridge operations to collect validator confirmations are performed on this side of the bridge.
+
+* **Foreign** can be any chain; generally it refers to the Ethereum mainnet. 
+
+### Operational Modes
+
+The POA TokenBridge provides three operational modes:
+
+- [x] `Native-to-ERC20` **Coins** on a Home network can be converted to ERC20-compatible **tokens** on a Foreign network. Coins are locked on the Home side and the corresponding amount of ERC20 tokens are minted on the Foreign side. When the operation is reversed, tokens are burnt on the Foreign side and unlocked in the Home network. _More Information: [POA-to-POA20 Bridge](https://medium.com/poa-network/introducing-poa-bridge-and-poa20-55d8b78058ac)_
+- [x] `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B". _More Information: [ERC20-to-ERC20](https://medium.com/poa-network/introducing-the-erc20-to-erc20-tokenbridge-ce266cc1a2d0)_
+- [x] `ERC20-to-Native`: Pre-existing **tokens** in the Foreign network are locked and **coins** are minted in the `Home` network. In this mode, the Home network consensus engine invokes [Parity's Block Reward contract](https://wiki.parity.io/Block-Reward-Contract.html) to mint coins per the bridge contract request. _More Information: [xDai Chain](https://medium.com/poa-network/poa-network-partners-with-makerdao-on-xdai-chain-the-first-ever-usd-stable-blockchain-65a078c41e6a)_
+
+
+## Architecture
+
+### Native-to-ERC20
+
+![Native-to-ERC](Native-to-ERC.png)
+
+### ERC20-to-ERC20 and ERC20-to-Native
+
+![ERC-to-ERC](ERC-to-ERC.png)
+
+
+### Watcher
+A watcher listens for a certain event and creates proper jobs in the queue. These jobs contain the transaction data (without the nonce) and the transaction hash for the related event. The watcher runs on a given frequency, keeping track of the last processed block.
+
+If the watcher observes that the transaction data cannot be prepared, which generally means that the corresponding method of the bridge contract cannot be invoked, it inspects the contract state to identify the potential reason for failure and records this in the logs. 
+
+
+There are three Watchers:
+- **Signature Request Watcher**: Listens to `UserRequestForSignature` events on the Home network.
+- **Collected Signatures Watcher**: Listens to `CollectedSignatures` events on the Home network.
+- **Affirmation Request Watcher**: Depends on the bridge mode. 
+   - `Native-to-ERC20`: Listens to `UserRequestForAffirmation` raised by the bridge contract.
+   - `ERC20-to-ERC20` and `ERC20-to-Native`: Listens to `Transfer` events raised by the token contract.
+
+
+### Sender
+A sender subscribes to the queue and keeps track of the nonce. It takes jobs from the queue, extracts transaction data, adds the proper nonce, and sends it to the network.
+
+There are two Senders:
+- **Home Sender**: Sends a transaction to the `Home` network.
+- **Foreign Sender**: Sends a transaction to the `Foreign` network.
+
+### RabbitMQ
+
+[RabbitMQ](https://www.rabbitmq.com/) is used to transmit jobs from watchers to senders.
+
+### Redis DB
+
+Redis is used to store the number of blocks that were already inspected by watchers, and the NOnce (Number of Operation) which was used previously by the sender to send a transaction.
+
+For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues/90)
+
+# How to Use
+
+## Installation and Deployment
+
+#### Deploy the Bridge Contracts
+
+1. [Deploy the bridge contracts](https://github.com/poanetwork/poa-bridge-contracts/blob/master/deploy/README.md)
+
+2. Open `bridgeDeploymentResults.json` or copy the JSON output generated by the bridge contract deployment process.
+  
+   `Native-to-ERC20` mode example:
+   ```json
+   {
+       "homeBridge": {
+           "address": "0xc60daff55ec5b5ce5c3d2105a77e287ff638c35e",
+           "deployedBlockNumber": 123321
+       },
+       "foreignBridge": {
+           "address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+           "deployedBlockNumber": 456654,
+           "erc677": {
+               "address": "0x41a29780309dc2582f080f6af89953be3435679a"
+           }
+       }
+   }
+   ```
+
+   `ERC20-to-ERC20` mode example:
+   ```json
+   {
+       "homeBridge": {
+           "address": "0x765a0d90e5a5773deacbd94b2dc941cbb163bdab",
+           "deployedBlockNumber": 789987,
+           "erc677": {
+               "address": "0x269f57f5ae5421d084686f9e353f5b7ee6af54c2"
+           }
+       },
+       "foreignBridge": {
+           "address": "0x7ae703ea88b0545eef1f0bf8f91d5276e39be2f7",
+           "deployedBlockNumber": 567765
+       }
+   }
+   ```
+
+## Configuration
+
+1. Create a `.env` file: `cp .env.example .env`
+
+2. Fill in the required information using the JSON output data. Check the tables with the [set of parameters](#configuration-parameters) below to see their explanation.
+
+## Run the Processes
+
+There are two options to run the TokenBridge processes:
+1. Docker containers. This requires [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/). If you are on Linux, it's also recommended that you [create a docker group and add your user to it](https://docs.docker.com/install/linux/linux-postinstall/), so that you can use the CLI without sudo.
+2. NodeJs Package Manager (NPM).
+
+### Docker
+
+  - While running the bridge containers for the first time use `VALIDATOR_ADDRESS=<validator address> VALIDATOR_ADDRESS_PRIVATE_KEY=<validator address private key> docker-compose up -d --build` 
+  - For further launches use `VALIDATOR_ADDRESS=<validator address>  VALIDATOR_ADDRESS_PRIVATE_KEY=<validator address private key> docker-compose  up  --detach`
+  - To run additional commands,  use the prefix `docker-compose exec bridge_affirmation` to execute the command inside of the running Docker containers. Make sure the bridge service is started before using the commands. 
+
+     - `docker-compose exec bridge_affirmation npm run watcher:signature-request`
+     - `docker-compose exec bridge_affirmation npm run watcher:collected-signatures`
+     - `docker-compose exec bridge_affirmation npm run watcher:affirmation-request`
+     - `docker-compose exec bridge_affirmation npm run sender:home`
+     - `docker-compose exec bridge_affirmation npm run sender:foreign`
+
+### NPM
+
+  - `redis-server` starts Redis. redis-cli ping will return a pong if Redis is running.
+  - `rabbitmq-server` starts RabbitMQ. Use rabbitmqctl status to check if RabbitMQ is running.
+  - `npm run watcher:signature-request`
+  - `npm run watcher:collected-signatures`
+  - `npm run watcher:affirmation-request`
+  - `npm run sender:home`
+  - `npm run sender:foreign`
+
+### Bridge UI
+
+See the [Bridge UI installation instructions](https://github.com/poanetwork/bridge-ui/) to configure and use the optional Bridge UI.
+
+## Rollback the Last Processed Block in Redis
+
+If the bridge does not handle an event properly (i.e. a transaction stalls due to a low gas price), the Redis DB can be rolled back. You must identify which watcher needs to re-run. For example, if the validator signatures were collected but the transaction with signatures was not sent to the Foreign network, the `collected-signatures` watcher must look at the block where the corresponding `CollectedSignatures` event was raised.
+
+Execute this command in the bridge root directory:
+
+```shell
+bash ./reset-lastBlock.sh <watcher> <block num>
 ```
-cd ..
-npm run compile
+for NPM installation or
+```shell
+docker-compose exec bridge_affirmation bash ./reset-lastBlock.sh <watcher> <block num>
 ```
+for docker installation respectively, where the _watcher_ could be one of:
 
-2. Create a `.env` file.
-`cp .env.example .env`
+- `signature-request`
+- `collected-signatures`
+- `affirmation-request`
 
-3. If necessary, deploy and configure a multi-sig wallet contract to manage the bridge contracts after deployment. We have not audited any wallets for security, but have used https://github.com/gnosis/MultiSigWallet/ with success.
+### Configuration parameters
 
-4. Adjust the parameters in the `.env` file depending on the desired bridge mode. See below for comments related to each parameter.
+| Variable | Description | Values |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| `BRIDGE_MODE` | The bridge mode. The bridge starts listening to a different set of events based on this parameter. | `NATIVE_TO_ERC` / `ERC_TO_ERC` / `ERC_TO_NATIVE` |
+| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
+| `HOME_BRIDGE_ADDRESS` | The address of the bridge contract address in the Home network. It is used to listen to events from and send validators' transactions to the Home network. | hexidecimal beginning with "0x" |
+| `HOME_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Home network for new blocks. The interval should match the average production time for a new block. | integer |
+| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
+| `FOREIGN_BRIDGE_ADDRESS` | The  address of the bridge contract address in the Foreign network. It is used to listen to events from and send validators' transactions to the Foreign network. | hexidecimal beginning with "0x" |
+| `ERC20_TOKEN_ADDRESS` | Used with the `ERC_TO_ERC` bridge mode, this parameter specifies the ERC20-compatible token contract address. The token contract address is used to identify transactions that transfer tokens to the Foreign Bridge account address. Omit this parameter with other bridge modes. | hexidecimal beginning with "0x" |
+| `FOREIGN_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Foreign network for new blocks. The interval should match the average production time for a new block. | integer |
+| `HOME_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Home network. The gas price provided by the oracle is used to send the validator's transactions to the RPC node. Since it is assumed that the Home network has a predefined gas price (e.g. the gas price in the Core of POA.Network is `1 GWei`), the gas price oracle parameter can be omitted for such networks. | URL |
+| `HOME_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `HOME_GAS_PRICE_ORACLE_URL` is not used. | `instant` / `fast` / `standard` / `slow` |
+| `HOME_GAS_PRICE_FALLBACK` | The gas price (in Wei) that is used if both the oracle and the fall back gas price specified in the Home Bridge contract are not available. | integer |
+| `HOME_GAS_PRICE_UPDATE_INTERVAL` | An interval in milliseconds used to get the updated gas price value either from the oracle or from the Home Bridge contract. | integer |
+| `FOREIGN_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Foreign network. The provided gas price is used to send the validator's transactions to the RPC node. If the Foreign network is Ethereum Foundation mainnet, the oracle URL can be: https://gasprice.poa.network. Otherwise this parameter can be omitted. | URL |
+| `FOREIGN_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `FOREIGN_GAS_PRICE_ORACLE_URL`is not used. | `instant` / `fast` / `standard` / `slow` |
+| `FOREIGN_GAS_PRICE_FALLBACK` | The gas price (in Wei) used if both the oracle and fall back gas price specified in the Foreign Bridge contract are not available. | integer |
+| `FOREIGN_GAS_PRICE_UPDATE_INTERVAL` | The interval in milliseconds used to get the updated gas price value either from the oracle or from the Foreign Bridge contract. | integer |
+| `VALIDATOR_ADDRESS_PRIVATE_KEY` | The private key of the bridge validator used to sign confirmations before sending transactions to the bridge contracts. The validator account is calculated automatically from the private key. Every bridge instance (set of watchers and senders) must have its own unique private key. The specified private key is used to sign transactions on both sides of the bridge. | hexidecimal without "0x" |
+| `HOME_START_BLOCK` | The block number in the Home network used to start watching for events when the bridge instance is run for the first time. Usually this is the same block where the Home Bridge contract is deployed. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
+| `FOREIGN_START_BLOCK` | The block number in the Foreign network used to start watching for events when the bridge instance runs for the first time. Usually this is the same block where the Foreign Bridge contract was deployed to. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
+| `QUEUE_URL` | RabbitMQ URL used by watchers and senders to communicate to the message queue. Typically set to: `amqp://127.0.0.1`. | local URL |
+| `REDIS_URL` | Redis DB URL used by watchers and senders to communicate to the database. Typically set to: `redis://127.0.0.1:6379`. | local URL |
+| `REDIS_LOCK_TTL` | Threshold in milliseconds for locking a resource in the Redis DB. Until the threshold is exceeded, the resource is unlocked. Usually it is `1000`. | integer |
+| `ALLOW_HTTP` | **Only use in test environments - must be omitted in production environments.**. If this parameter is specified and set to `yes`, RPC URLs can be specified in form of HTTP links. A warning that the connection is insecure will be written to the logs. | `yes` / `no` |
+| `LOG_LEVEL` | Set the level of details in the logs. | `trace` / `debug` / `info` / `warn` / `error` / `fatal` |
+| `MAX_PROCESSING_TIME` | The workers processes will be killed if this amount of time (in milliseconds) is ellapsed before they finish processing. It is recommended to set this value to 4 times the value of the longest polling time (set with the `HOME_POLLING_INTERVAL` and `FOREIGN_POLLING_INTERVAL` variables). To disable this, set the time to 0. | integer |
 
-5. Add funds to the deployment accounts in both the Home and Foreign networks. 
+### Useful Commands for Development
 
-6. Run `node deploy.js`. 
+#### RabbitMQ
+Command | Description
+--- | ---
+`rabbitmqctl list_queues` | List all queues
+`rabbitmqctl purge_queue home` | Remove all messages from `home` queue
+`rabbitmqctl status` | check if rabbitmq server is currently running  
+`rabbitmq-server`    | start rabbitMQ server  
 
-## `NATIVE-TO-ERC` Bridge mode configuration example.  
+#### Redis
+Use `redis-cli`
 
-This example of an `.env` file for the `native-to-erc` bridge mode includes comments describing each parameter.
+Command | Description
+--- | ---
+`KEYS *` | Returns all keys
+`SET signature-request:lastProcessedBlock 1234` | Set key to hold the string value.
+`GET signature-request:lastProcessedBlock` | Get the key value.
+`DEL signature-request:lastProcessedBlock` | Removes the specified key.
+`FLUSHALL` | Delete all the keys in all existing databases.
+`redis-cli ping`     | check if redis is running.  
+`redis-server`       | start redis server.  
+
+## Testing
 
 ```bash
-
-
-# The type of bridge. Defines set of contracts to be deployed.
-BRIDGE_MODE=NATIVE_TO_ERC
-
-# The private key hex value of the account responsible for contracts
-# deployments and initial configuration. The account's balance must contain
-# funds from both networks.
-DEPLOYMENT_ACCOUNT_PRIVATE_KEY=67..14
-# The "gas" parameter set in every deployment/configuration transaction.
-DEPLOYMENT_GAS_LIMIT=4000000
-# The "gasPrice" parameter set in every deployment/configuration transaction on
-# both networks.
-DEPLOYMENT_GAS_PRICE=10
-# The timeout limit to wait for receipt of the deployment/configuration
-# transaction.
-GET_RECEIPT_INTERVAL_IN_MILLISECONDS=3000
-
-# The name of the ERC677 token to be deployed on the Foreign network.
-BRIDGEABLE_TOKEN_NAME="Your New Bridged Token"
-# The symbol name of the ERC677 token to be deployed on the Foreign network.
-BRIDGEABLE_TOKEN_SYMBOL="TEST"
-# The number of supportable decimal digits after the "point" in the ERC677 token
-# to be deployed on the Foreign network.
-BRIDGEABLE_TOKEN_DECIMALS="18"
-
-# The RPC channel to a Home node able to handle deployment/configuration
-# transactions.
-HOME_RPC_URL=https://poa.infura.io
-# The address of an administrator on the Home network who can change bridge
-# parameters and a validator's contract. For extra security we recommended using
-# a multi-sig wallet contract address here.
-HOME_OWNER_MULTISIG=0x
-# The address from which a validator's contract can be upgraded on Home.
-HOME_UPGRADEABLE_ADMIN_VALIDATORS=0x
-# The address from which the bridge's contract can be upgraded on Home.
-HOME_UPGRADEABLE_ADMIN_BRIDGE=0x 
-# The daily transaction limit in Wei. As soon as this limit is exceeded, any
-# transaction which requests to relay assets will fail.
-HOME_DAILY_LIMIT=30000000000000000000000000
-# The maximum limit for one transaction in Wei. If a single transaction tries to
-# relay funds exceeding this limit it will fail.
-HOME_MAX_AMOUNT_PER_TX=1500000000000000000000000
-# The minimum limit for one transaction in Wei. If a transaction tries to relay
-# funds below this limit it will fail. This is required to prevent dryout
-# validator accounts.
-HOME_MIN_AMOUNT_PER_TX=500000000000000000
-# The finalization threshold. The number of blocks issued after the block with
-# the corresponding deposit transaction to guarantee the transaction will not be
-# rolled back.
-HOME_REQUIRED_BLOCK_CONFIRMATIONS=1
-# The default gas price used to send Home Network signature transactions for
-# deposit or withdrawl confirmations. This price is used if the Gas price oracle
-# is unreachable. 
-HOME_GAS_PRICE=1
-
-# The RPC channel to a Foreign node able to handle deployment/configuration
-# transactions.
-FOREIGN_RPC_URL=https://mainnet.infura.io
-# The address of an administrator on the Foreign network who can change bridge
-# parameters and the validator's contract. For extra security we recommended
-# using a multi-sig wallet contract address here.
-FOREIGN_OWNER_MULTISIG=0x
-# The address from which a validator's contract can be upgraded on Foreign.
-FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS=0x
-# The address from which the bridge's contract can be upgraded on Foreign.
-FOREIGN_UPGRADEABLE_ADMIN_BRIDGE=0x
-# The daily limit in Wei. As soon as this limit is exceeded, any transaction
-# requesting to relay assets will fail.
-FOREIGN_DAILY_LIMIT=15000000000000000000000000
-# The maximum limit per one transaction in Wei. If a transaction tries to relay
-# funds exceeding this limit it will fail.
-FOREIGN_MAX_AMOUNT_PER_TX=750000000000000000000000
-# The minimum limit for one transaction in Wei. If a transaction tries to relay
-# funds below this limit it will fail. This is required to prevent dryout
-# validator accounts.
-FOREIGN_MIN_AMOUNT_PER_TX=500000000000000000
-# The finalization threshold. The number of blocks issued after the block with
-# the corresponding deposit transaction to guarantee the transaction will not be
-# rolled back.
-FOREIGN_REQUIRED_BLOCK_CONFIRMATIONS=8
-# The default gas price used to send Foreign network transactions finalizing
-# asset deposits. This price is used if the Gas price oracle is unreachable.
-FOREIGN_GAS_PRICE=10
-
-# The minimum number of validators required to send their signatures confirming
-# the relay of assets. The same number of validators is expected on both sides
-# of the bridge.
-REQUIRED_NUMBER_OF_VALIDATORS=1
-# The set of validators' addresses. It is assumed that signatures from these
-# addresses are collected on the Home side. The same addresses will be used on
-# the Foreign network to confirm that the finalized agreement was transferred
-# correctly to the Foreign network.
-VALIDATORS="0x 0x 0x"
+npm test
 ```
 
+### E2E tests
 
-## `ERC-TO-ERC` Bridge mode configuration example. 
+See the [E2E README](/e2e) for instructions. 
 
-This example of an `.env` file for the `erc-to-erc` bridge mode includes comments describing each parameter.
+*Notice*: for docker-based installations do not forget to add `docker-compose exec bridge_affirmation` before the test commands listed below.
 
-```bash
-# The type of bridge. Defines set of contracts to be deployed.
-BRIDGE_MODE=ERC_TO_ERC
+### Native-to-ERC20 Mode Testing
 
-# The private key hex value of the account responsible for contracts
-# deployments and initial configuration. The account's balance must contain
-# funds from both networks.
-DEPLOYMENT_ACCOUNT_PRIVATE_KEY=67..14
-# The "gas" parameter set in every deployment/configuration transaction.
-DEPLOYMENT_GAS_LIMIT=4000000
-# The "gasPrice" parameter set in every deployment/configuration transaction on
-# both networks.
-DEPLOYMENT_GAS_PRICE=10
-# The timeout limit to wait for receipt of the deployment/configuration
-# transaction.
-GET_RECEIPT_INTERVAL_IN_MILLISECONDS=3000
+When running the processes, the following commands can be used to test functionality.
 
-# The name of the ERC677 token to be deployed on the Home network.
-BRIDGEABLE_TOKEN_NAME="Your New Bridged Token"
-# The symbol name of the ERC677 token to be deployed on the Home network.
-BRIDGEABLE_TOKEN_SYMBOL="TEST"
-# The number of supportable decimal digits after the "point" in the ERC677 token
-# to be deployed on the Home network.
-BRIDGEABLE_TOKEN_DECIMALS="18"
+- To send deposits to a home contract run `node scripts/native_to_erc20/sendHome.js <tx num>`, where `<tx num>` is how many tx will be sent out to deposit.
 
-# The RPC channel to a Home node able to handle deployment/configuration
-# transactions.
-HOME_RPC_URL=https://poa.infura.io
-# The address of an administrator on the Home network who can change bridge
-# parameters and a validator's contract. For extra security we recommended using
-# a multi-sig wallet contract address here.
-HOME_OWNER_MULTISIG=0x
-# The address from which a validator's contract can be upgraded on Home.
-HOME_UPGRADEABLE_ADMIN_VALIDATORS=0x
-# The address from which the bridge's contract can be upgraded on Home.
-HOME_UPGRADEABLE_ADMIN_BRIDGE=0x 
-# The daily transaction limit in Wei. As soon as this limit is exceeded, any
-# transaction which requests to relay assets will fail.
-HOME_DAILY_LIMIT=30000000000000000000000000
-# The maximum limit for one transaction in Wei. If a single transaction tries to
-# relay funds exceeding this limit it will fail.
-HOME_MAX_AMOUNT_PER_TX=1500000000000000000000000
-# The minimum limit for one transaction in Wei. If a transaction tries to relay
-# funds below this limit it will fail. This is required to prevent dryout
-# validator accounts.
-HOME_MIN_AMOUNT_PER_TX=500000000000000000
-# The finalization threshold. The number of blocks issued after the block with
-# the corresponding deposit transaction to guarantee the transaction will not be
-# rolled back.
-HOME_REQUIRED_BLOCK_CONFIRMATIONS=1
-# The default gas price used to send Home Network signature transactions for
-# deposit or withdrawl confirmations. This price is used if the Gas price oracle
-# is unreachable. 
-HOME_GAS_PRICE=1
+- To send withdrawals to a foreign contract run `node scripts/native_to_erc20/sendForeign.js <tx num>`, where `<tx num>` is how many tx will be sent out to withdraw.
 
-# The RPC channel to a Foreign node able to handle deployment/configuration
-# transactions.
-FOREIGN_RPC_URL=https://mainnet.infura.io
-# The address of an administrator on the Foreign network who can change bridge
-# parameters and the validator's contract. For extra security we recommended
-# using a multi-sig wallet contract address here.
-FOREIGN_OWNER_MULTISIG=0x
-# The address from which a validator's contract can be upgraded on Foreign.
-FOREIGN_UPGRADEABLE_ADMIN_VALIDATORS=0x
-# The address from which the bridge's contract can be upgraded on Foreign.
-FOREIGN_UPGRADEABLE_ADMIN_BRIDGE=0x
-# These three parameters are not used in this mode, but the deployment script
-# requires it to be set to some value.
-FOREIGN_DAILY_LIMIT=15000000000000000000000000
-FOREIGN_MAX_AMOUNT_PER_TX=750000000000000000000000
-FOREIGN_MIN_AMOUNT_PER_TX=500000000000000000
-# The finalization threshold. The number of blocks issued after the block with
-# the corresponding deposit transaction to guarantee the transaction will not be
-# rolled back.
-FOREIGN_REQUIRED_BLOCK_CONFIRMATIONS=8
-# The default gas price used to send Foreign network transactions finalizing
-# asset deposits. This price is used if the Gas price oracle is unreachable.
-FOREIGN_GAS_PRICE=10
-# The address of the existing ERC20 compatible token in the Foreign network to
-# be exchanged to the ERC20/ERC677 token deployed on Home.
-ERC20_TOKEN_ADDRESS=0x
+### ERC20-to-ERC20 Mode Testing
 
-# The minimum number of validators required to send their signatures confirming
-# the relay of assets. The same number of validators is expected on both sides
-# of the bridge.
-REQUIRED_NUMBER_OF_VALIDATORS=1
-# The set of validators' addresses. It is assumed that signatures from these
-# addresses are collected on the Home side. The same addresses will be used on
-# the Foreign network to confirm that the finalized agreement was transferred
-# correctly to the Foreign network.
-VALIDATORS="0x 0x 0x"
-```
+- To deposit from a Foreign to a Home contract run `node scripts/erc20_to_erc20/sendForeign.js <tx num>`.
+
+- To make withdrawal to Home from a Foreign contract run `node scripts/erc20_to_erc20/sendHome.js <tx num>`.
+
+### ERC20-to-Native Mode Testing
+
+- To deposit from a Foreign to a Home contract run `node scripts/erc20_to_native/sendForeign.js <tx num>`.
+
+- To make withdrawal to Home from a Foreign contract run `node scripts/erc20_to_native/sendHome.js <tx num>`.
+
+### Configuration parameters for testing
+
+| Variable | Description |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. |
+| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. |
+| `USER_ADDRESS` | An account - the current owner of coins/tokens. |
+| `USER_ADDRESS_PRIVATE_KEY` | A private key belonging to the account. |
+| `HOME_BRIDGE_ADDRESS` | Address of the bridge in the Home network to send transactions. |
+| `HOME_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Home network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5. |
+| `HOME_TEST_TX_GAS_PRICE` | The gas price (in Wei) that is used to send transactions in the Home network . |
+| `FOREIGN_BRIDGE_ADDRESS` | Address of the bridge in the Foreign network to send transactions. |
+| `FOREIGN_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Foreign network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5. |
+| `FOREIGN_TEST_TX_GAS_PRICE` | The gas price (in Wei) that is used to send transactions in the Foreign network . |
+
+## Contributing
+
+See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
+
+## License
+
+[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+
+This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
+## References
+
+* [POA Bridge FAQ](https://poanet.zendesk.com/hc/en-us/categories/360000349273-POA-Bridge)

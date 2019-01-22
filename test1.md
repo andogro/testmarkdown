@@ -1,119 +1,291 @@
-# Verifiable Delay Function (VDF) Implementations
 
-## What is a VDF?
+# POA TokenBridge
 
-A Verifiable Delay Function (VDF) is a function that requires substantial time to evaluate (even with a polynomial number of parallel processors) but can be very quickly verified as correct. VDFs can be used to construct randomness beacons with multiple applications in a distributed network environment. By introducing a time delay during evaluation, VDFs prevent malicious actors from influencing output. Output cannot be differentiated from a random number until the final result is computed. 
+[![Build Status](https://travis-ci.org/poanetwork/token-bridge.svg)](https://travis-ci.org/poanetwork/token-bridge)
+[![Gitter](https://badges.gitter.im/poanetwork/poa-bridge.svg)](https://gitter.im/poanetwork/poa-bridge?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-See https://eprint.iacr.org/2018/712.pdf for more details.
+The TokenBridge is deployed on specified validator nodes (only nodes whose private keys correspond to addresses specified in the smart contracts) in the network. It connects to two chains via a Remote Procedure Call (RPC) and is responsible for:
+- listening to events related to bridge contracts
+- sending transactions to authorize asset transfers
 
-## Description
+Following is an overview of the TokenBridge and [instructions for getting started](#how-to-use).
 
-This VDF implementation is written in Rust. We use class groups to implement 2 approaches.
-1. [Simple Verifiable Delay Functions](https://eprint.iacr.org/2018/627.pdf). Pietrzak, 2018
-2. [Efficient Verifiable Delay Functions](https://eprint.iacr.org/2018/623.pdf). Wesolowski, 2018
+## POA General Bridge Overview
 
-This repo includes three crates:
+A POA Bridge allows users to transfer assets between two chains in the Ethereum ecosystem. It is composed of several elements located in different POA Network repositories:
 
-* `classgroup`: a class group implementation, as well as a trait for class groups.
-* `vdf`: a Verifyable Delay Function (VDF) trait, as well as an implementation of that trait.
-* `vdf-cli`: a command-line interface to the vdf crate. It also includes additional commands, which are deprecated and will be replaced by a CLI to the classgroup crate.
+**Bridge Elements**
+1. The TokenBridge contained in this repository.
+2. [Solidity smart contracts](https://github.com/poanetwork/poa-bridge-contracts). Used to manage bridge validators, collect signatures, and confirm asset relay and disposal.
+3. [Bridge UI Application](https://github.com/poanetwork/bridge-ui). A DApp interface to transfer tokens and coins between chains.
+4. [Bridge Monitor](https://github.com/poanetwork/bridge-monitor). A tool for checking balances and unprocessed events in bridged networks.
+5. [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). Manages configuration instructions for remote deployments.
 
-## Usage
+## Network Definitions
 
-- Install [Rust](https://doc.rust-lang.org/cargo/getting-started/installation.html)
-<!--- Any Version?
---->
+ Bridging occurs between two networks.
 
-- Install the [GNU Multiple Precision Library](https://gmplib.org/)
-   ```sh
-   $ sudo apt-get install -y libgmp-dev
+ * **Home** - or **Native** - is a network with fast and inexpensive operations. All bridge operations to collect validator confirmations are performed on this side of the bridge.
+
+* **Foreign** can be any chain; generally it refers to the Ethereum mainnet. 
+
+## Operational Modes
+
+The POA TokenBridge provides three operational modes:
+
+- [x] `Native-to-ERC20` **Coins** on a Home network can be converted to ERC20-compatible **tokens** on a Foreign network. Coins are locked on the Home side and the corresponding amount of ERC20 tokens are minted on the Foreign side. When the operation is reversed, tokens are burnt on the Foreign side and unlocked in the Home network. **More Information: [POA-to-POA20 Bridge](https://medium.com/poa-network/introducing-poa-bridge-and-poa20-55d8b78058ac)**
+- [x] `ERC20-to-ERC20` ERC20-compatible tokens on the Foreign network are locked and minted as ERC20-compatible tokens (ERC677 tokens) on the Home network. When transferred from Home to Foreign, they are burnt on the Home side and unlocked in the Foreign network. This can be considered a form of atomic swap when a user swaps the token "X" in network "A" to the token "Y" in network "B". **More Information: [ERC20-to-ERC20](https://medium.com/poa-network/introducing-the-erc20-to-erc20-tokenbridge-ce266cc1a2d0)**
+- [x] `ERC20-to-Native`: Pre-existing **tokens** in the Foreign network are locked and **coins** are minted in the `Home` network. In this mode, the Home network consensus engine invokes [Parity's Block Reward contract](https://wiki.parity.io/Block-Reward-Contract.html) to mint coins per the bridge contract request. **More Information: [xDai Chain](https://medium.com/poa-network/poa-network-partners-with-makerdao-on-xdai-chain-the-first-ever-usd-stable-blockchain-65a078c41e6a)**
+
+## Architecture
+
+### Native-to-ERC20
+
+![Native-to-ERC](Native-to-ERC.png)
+
+### ERC20-to-ERC20 and ERC20-to-Native
+
+![ERC-to-ERC](ERC-to-ERC.png)
+
+### Watcher
+A watcher listens for a certain event and creates proper jobs in the queue. These jobs contain the transaction data (without the nonce) and the transaction hash for the related event. The watcher runs on a given frequency, keeping track of the last processed block.
+
+If the watcher observes that the transaction data cannot be prepared, which generally means that the corresponding method of the bridge contract cannot be invoked, it inspects the contract state to identify the potential reason for failure and records this in the logs. 
+
+There are three Watchers:
+- **Signature Request Watcher**: Listens to `UserRequestForSignature` events on the Home network.
+- **Collected Signatures Watcher**: Listens to `CollectedSignatures` events on the Home network.
+- **Affirmation Request Watcher**: Depends on the bridge mode. 
+   - `Native-to-ERC20`: Listens to `UserRequestForAffirmation` raised by the bridge contract.
+   - `ERC20-to-ERC20` and `ERC20-to-Native`: Listens to `Transfer` events raised by the token contract.
+
+### Sender
+A sender subscribes to the queue and keeps track of the nonce. It takes jobs from the queue, extracts transaction data, adds the proper nonce, and sends it to the network.
+
+There are two Senders:
+- **Home Sender**: Sends a transaction to the `Home` network.
+- **Foreign Sender**: Sends a transaction to the `Foreign` network.
+
+### RabbitMQ
+
+[RabbitMQ](https://www.rabbitmq.com/) is used to transmit jobs from watchers to senders.
+
+### Redis DB
+
+Redis is used to store the number of blocks that were already inspected by watchers, and the NOnce (Number of Operation) which was used previously by the sender to send a transaction.
+
+For more information on the Redis/RabbitMQ requirements, see [#90](/../../issues/90). We also provide [useful commands for development](#useful-commands-for-development).
+
+# How to Use
+
+## Installation and Deployment
+
+**Note:** The following steps detail the bridge deployment process for development and testing. For deployment in a production environment we recommend using the [Bridge Deployment Playbooks](https://github.com/poanetwork/deployment-bridge). 
+
+#### Deploy the Bridge Contracts
+
+1. [Deploy the bridge contracts](https://github.com/poanetwork/poa-bridge-contracts/blob/master/deploy/README.md)
+
+2. Open `bridgeDeploymentResults.json` or copy the JSON output generated by the bridge contract deployment process.
+  
+   `Native-to-ERC20` mode example:
+   ```json
+   {
+       "homeBridge": {
+           "address": "0xc60daff55ec5b5ce5c3d2105a77e287ff638c35e",
+           "deployedBlockNumber": 123321
+       },
+       "foreignBridge": {
+           "address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+           "deployedBlockNumber": 456654,
+           "erc677": {
+               "address": "0x41a29780309dc2582f080f6af89953be3435679a"
+           }
+       }
+   }
    ```
-- Download and prepare the repository
-   ```sh
-   $ git clone https://github.com/poanetwork/vdf.git
-   $ cd vdf
-   $ cargo install
+
+   `ERC20-to-ERC20` mode example:
+   ```json
+   {
+       "homeBridge": {
+           "address": "0x765a0d90e5a5773deacbd94b2dc941cbb163bdab",
+           "deployedBlockNumber": 789987,
+           "erc677": {
+               "address": "0x269f57f5ae5421d084686f9e353f5b7ee6af54c2"
+           }
+       },
+       "foreignBridge": {
+           "address": "0x7ae703ea88b0545eef1f0bf8f91d5276e39be2f7",
+           "deployedBlockNumber": 567765
+       }
+   }
    ```
 
-### Command Line Interface
+## Configuration
 
-To initiate, use the `vdf-cli` command followed by 2 arguments.
+1. Create a `.env` file: `cp .env.example .env`
 
-- _challenge_: byte string of arbitrary length
-- _difficulty_: number of iterations, each iteration requires more time to evaluate
+2. Fill in the required information using the JSON output data. Check the tables with the [set of parameters](#configuration-parameters) below to see their explanation. 
 
-<!---
--Is this the wesolowski proof of time, are there ways to run the other proofs?
---->
+## Run the Processes
 
-Once complete you will see the output,returned as a `Vec<u8>`.
+There are two options to run the TokenBridge processes:
+1. Docker containers. This requires [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/). If you are on Linux, it's also recommended that you [create a docker group and add your user to it](https://docs.docker.com/install/linux/linux-postinstall/), so that you can use the CLI without sudo.
+2. NodeJs Package Manager (NPM).
 
-**Example**
-```sh
-$ vdf-cli aa 100
-005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
+### Docker 
+
+  - While running the bridge containers for the first time use `VALIDATOR_ADDRESS=<validator address> VALIDATOR_ADDRESS_PRIVATE_KEY=<validator address private key> docker-compose up -d --build` 
+  - For further launches use `VALIDATOR_ADDRESS=<validator address>  VALIDATOR_ADDRESS_PRIVATE_KEY=<validator address private key> docker-compose  up  --detach`
+
+All [watcher](#watcher) & [sender](#sender) services launch when `docker-compose` is called. 
+
+### NPM
+
+  - `redis-server` starts Redis. redis-cli ping will return a pong if Redis is running.
+  - `rabbitmq-server` starts RabbitMQ. Use rabbitmqctl status to check if RabbitMQ is running.
+  - `npm run watcher:signature-request`
+  - `npm run watcher:collected-signatures`
+  - `npm run watcher:affirmation-request`
+  - `npm run sender:home`
+  - `npm run sender:foreign`
+
+### Bridge UI
+
+See the [Bridge UI installation instructions](https://github.com/poanetwork/bridge-ui/) to configure and use the optional Bridge UI.
+
+## Rollback the Last Processed Block in Redis
+
+If the bridge does not handle an event properly (i.e. a transaction stalls due to a low gas price), the Redis DB can be rolled back. You must identify which watcher needs to re-run. For example, if the validator signatures were collected but the transaction with signatures was not sent to the Foreign network, the `collected-signatures` watcher must look at the block where the corresponding `CollectedSignatures` event was raised.
+
+Execute this command in the bridge root directory:
+
+```shell
+bash ./reset-lastBlock.sh <watcher> <block num>
 ```
-To verify, use the `vdi-cli` command with the same arguments and include the output.
+for NPM installation or
+```shell
+docker-compose exec bridge_affirmation bash ./reset-lastBlock.sh <watcher> <block num>
+```
+for docker installation respectively, where the _watcher_ could be one of:
 
-**Example**
-```sh
-$ vdf-cli aa 100 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
-Proof is valid
+- `signature-request`
+- `collected-signatures`
+- `affirmation-request`
+
+## Configuration parameters
+
+| Variable | Description | Values |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
+| `BRIDGE_MODE` | The bridge mode. The bridge starts listening to a different set of events based on this parameter. | `NATIVE_TO_ERC` / `ERC_TO_ERC` / `ERC_TO_NATIVE` |
+| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
+| `HOME_BRIDGE_ADDRESS` | The address of the bridge contract address in the Home network. It is used to listen to events from and send validators' transactions to the Home network. | hexidecimal beginning with "0x" |
+| `HOME_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Home network for new blocks. The interval should match the average production time for a new block. | integer |
+| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. Several URLs can be specified, delimited by spaces. If the connection to one of these nodes is lost the next URL is used for connection. | URL(s) |
+| `FOREIGN_BRIDGE_ADDRESS` | The  address of the bridge contract address in the Foreign network. It is used to listen to events from and send validators' transactions to the Foreign network. | hexidecimal beginning with "0x" |
+| `ERC20_TOKEN_ADDRESS` | Used with the `ERC_TO_ERC` bridge mode, this parameter specifies the ERC20-compatible token contract address. The token contract address is used to identify transactions that transfer tokens to the Foreign Bridge account address. Omit this parameter with other bridge modes. | hexidecimal beginning with "0x" |
+| `FOREIGN_POLLING_INTERVAL` | The interval in milliseconds used to request the RPC node in the Foreign network for new blocks. The interval should match the average production time for a new block. | integer |
+| `HOME_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Home network. The gas price provided by the oracle is used to send the validator's transactions to the RPC node. Since it is assumed that the Home network has a predefined gas price (e.g. the gas price in the Core of POA.Network is `1 GWei`), the gas price oracle parameter can be omitted for such networks. | URL |
+| `HOME_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `HOME_GAS_PRICE_ORACLE_URL` is not used. | `instant` / `fast` / `standard` / `slow` |
+| `HOME_GAS_PRICE_FALLBACK` | The gas price (in Wei) that is used if both the oracle and the fall back gas price specified in the Home Bridge contract are not available. | integer |
+| `HOME_GAS_PRICE_UPDATE_INTERVAL` | An interval in milliseconds used to get the updated gas price value either from the oracle or from the Home Bridge contract. | integer |
+| `FOREIGN_GAS_PRICE_ORACLE_URL` | The URL used to get a JSON response from the gas price prediction oracle for the Foreign network. The provided gas price is used to send the validator's transactions to the RPC node. If the Foreign network is Ethereum Foundation mainnet, the oracle URL can be: https://gasprice.poa.network. Otherwise this parameter can be omitted. | URL |
+| `FOREIGN_GAS_PRICE_SPEED_TYPE` | Assuming the gas price oracle responds with the following JSON structure: `{"fast": 20.0, "block_time": 12.834, "health": true, "standard": 6.0, "block_number": 6470469, "instant": 71.0, "slow": 1.889}`, this parameter specifies the desirable transaction speed. The speed type can be omitted when `FOREIGN_GAS_PRICE_ORACLE_URL`is not used. | `instant` / `fast` / `standard` / `slow` |
+| `FOREIGN_GAS_PRICE_FALLBACK` | The gas price (in Wei) used if both the oracle and fall back gas price specified in the Foreign Bridge contract are not available. | integer |
+| `FOREIGN_GAS_PRICE_UPDATE_INTERVAL` | The interval in milliseconds used to get the updated gas price value either from the oracle or from the Foreign Bridge contract. | integer |
+| `VALIDATOR_ADDRESS_PRIVATE_KEY` | The private key of the bridge validator used to sign confirmations before sending transactions to the bridge contracts. The validator account is calculated automatically from the private key. Every bridge instance (set of watchers and senders) must have its own unique private key. The specified private key is used to sign transactions on both sides of the bridge. | hexidecimal without "0x" |
+| `HOME_START_BLOCK` | The block number in the Home network used to start watching for events when the bridge instance is run for the first time. Usually this is the same block where the Home Bridge contract is deployed. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
+| `FOREIGN_START_BLOCK` | The block number in the Foreign network used to start watching for events when the bridge instance runs for the first time. Usually this is the same block where the Foreign Bridge contract was deployed to. If a new validator instance is being deployed for an existing set of validators, the block number could be the latest block in the chain. | integer |
+| `QUEUE_URL` | RabbitMQ URL used by watchers and senders to communicate to the message queue. Typically set to: `amqp://127.0.0.1`. | local URL |
+| `REDIS_URL` | Redis DB URL used by watchers and senders to communicate to the database. Typically set to: `redis://127.0.0.1:6379`. | local URL |
+| `REDIS_LOCK_TTL` | Threshold in milliseconds for locking a resource in the Redis DB. Until the threshold is exceeded, the resource is unlocked. Usually it is `1000`. | integer |
+| `ALLOW_HTTP` | **Only use in test environments - must be omitted in production environments.**. If this parameter is specified and set to `yes`, RPC URLs can be specified in form of HTTP links. A warning that the connection is insecure will be written to the logs. | `yes` / `no` |
+| `LOG_LEVEL` | Set the level of details in the logs. | `trace` / `debug` / `info` / `warn` / `error` / `fatal` |
+| `MAX_PROCESSING_TIME` | The workers processes will be killed if this amount of time (in milliseconds) is ellapsed before they finish processing. It is recommended to set this value to 4 times the value of the longest polling time (set with the `HOME_POLLING_INTERVAL` and `FOREIGN_POLLING_INTERVAL` variables). To disable this, set the time to 0. | integer |
+
+## Useful Commands for Development
+
+### RabbitMQ
+Command | Description
+--- | ---
+`rabbitmqctl list_queues` | List all queues
+`rabbitmqctl purge_queue home` | Remove all messages from `home` queue
+`rabbitmqctl status` | check if rabbitmq server is currently running  
+`rabbitmq-server`    | start rabbitMQ server  
+
+### Redis
+Use `redis-cli`
+
+Command | Description
+--- | ---
+`KEYS *` | Returns all keys
+`SET signature-request:lastProcessedBlock 1234` | Set key to hold the string value.
+`GET signature-request:lastProcessedBlock` | Get the key value.
+`DEL signature-request:lastProcessedBlock` | Removes the specified key.
+`FLUSHALL` | Delete all the keys in all existing databases.
+`redis-cli ping`     | check if redis is running.  
+`redis-server`       | start redis server.  
+
+## Testing
+
+```bash
+npm test
 ```
 
-### VDF Library
+### E2E tests
 
-<!---
-Keep as is, and possibly include argument explanations as well (for byte_length for example). May not be needed though is CLI is main user interaction tool.
---->
+See the [E2E README](/e2e) for instructions. 
 
-```rust
-extern crate vdf;
-use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
-const CORRECT_SOLUTION: &[u8] =
-    b"\x00\x52\x71\xe8\xf9\xab\x2e\xb8\xa2\x90\x6e\x85\x1d\xfc\xb5\x54\x2e\x41\x73\xf0\x16\
-    \xb8\x5e\x29\xd4\x81\xa1\x08\xdc\x82\xed\x3b\x3f\x97\x93\x7b\x7a\xa8\x24\x80\x11\x38\
-    \xd1\x77\x1d\xea\x8d\xae\x2f\x63\x97\xe7\x6a\x80\x61\x3a\xfd\xa3\x0f\x2c\x30\xa3\x4b\
-    \x04\x0b\xaa\xaf\xe7\x6d\x57\x07\xd6\x86\x89\x19\x3e\x5d\x21\x18\x33\xb3\x72\xa6\xa4\
-    \x59\x1a\xbb\x88\xe2\xe7\xf2\xf5\xa5\xec\x81\x8b\x57\x07\xb8\x6b\x8b\x2c\x49\x5c\xa1\
-    \x58\x1c\x17\x91\x68\x50\x9e\x35\x93\xf9\xa1\x68\x79\x62\x0a\x4d\xc4\xe9\x07\xdf\x45\
-    \x2e\x8d\xd0\xff\xc4\xf1\x99\x82\x5f\x54\xec\x70\x47\x2c\xc0\x61\xf2\x2e\xb5\x4c\x48\
-    \xd6\xaa\x5a\xf3\xea\x37\x5a\x39\x2a\xc7\x72\x94\xe2\xd9\x55\xdd\xe1\xd1\x02\xae\x2a\
-    \xce\x49\x42\x93\x49\x2d\x31\xcf\xf2\x19\x44\xa8\xbc\xb4\x60\x89\x93\x06\x5c\x9a\x00\
-    \x29\x2e\x8d\x3f\x46\x04\xe7\x46\x5b\x4e\xee\xfb\x49\x4f\x5b\xea\x10\x2d\xb3\x43\xbb\
-    \x61\xc5\xa1\x5c\x7b\xdf\x28\x82\x06\x88\x5c\x13\x0f\xa1\xf2\xd8\x6b\xf5\xe4\x63\x4f\
-    \xdc\x42\x16\xbc\x16\xef\x7d\xac\x97\x0b\x0e\xe4\x6d\x69\x41\x6f\x9a\x9a\xce\xe6\x51\
-    \xd1\x58\xac\x64\x91\x5b";
+*Notice*: for docker-based installations do not forget to add `docker-compose exec bridge_affirmation` before the test commands listed below.
 
-fn main() {
-    let pietrzak_vdf = PietrzakVDFParams(2048).new();
-    assert_eq!(
-        &pietrzak_vdf.solve(b"\xaa", 100).unwrap()[..],
-        CORRECT_SOLUTION
-    );
-    assert!(pietrzak_vdf.verify(b"\xaa", 100, CORRECT_SOLUTION).is_ok());
-}
-```
-## Benchmarks
+### Native-to-ERC20 Mode Testing
 
-Benchmarks are provided for the classgroup operations. To run benchmarks:
+When running the processes, the following commands can be used to test functionality.
 
-```sh
-$ cd vdf/classgroup
-$ cargo bench
-```
+- To send deposits to a home contract run `node scripts/native_to_erc20/sendHome.js <tx num>`, where `<tx num>` is how many tx will be sent out to deposit.
 
-Additional benchmarks are under development.
+- To send withdrawals to a foreign contract run `node scripts/native_to_erc20/sendForeign.js <tx num>`, where `<tx num>` is how many tx will be sent out to withdraw.
 
-### Current Benchmarks
-<!---
-Include table, similar to https://github.com/Chia-Network/vdf-competition#benchmarks
---->
+### ERC20-to-ERC20 Mode Testing
+
+- To deposit from a Foreign to a Home contract run `node scripts/erc20_to_erc20/sendForeign.js <tx num>`.
+
+- To make withdrawal to Home from a Foreign contract run `node scripts/erc20_to_erc20/sendHome.js <tx num>`.
+
+### ERC20-to-Native Mode Testing
+
+- To deposit from a Foreign to a Home contract run `node scripts/erc20_to_native/sendForeign.js <tx num>`.
+
+- To make withdrawal to Home from a Foreign contract run `node scripts/erc20_to_native/sendHome.js <tx num>`.
+
+### Configuration parameters for testing
+
+| Variable | Description |
+|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `HOME_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Home network. |
+| `FOREIGN_RPC_URL` | The HTTPS URL(s) used to communicate to the RPC nodes in the Foreign network. |
+| `USER_ADDRESS` | An account - the current owner of coins/tokens. |
+| `USER_ADDRESS_PRIVATE_KEY` | A private key belonging to the account. |
+| `HOME_BRIDGE_ADDRESS` | Address of the bridge in the Home network to send transactions. |
+| `HOME_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Home network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5. |
+| `HOME_TEST_TX_GAS_PRICE` | The gas price (in Wei) that is used to send transactions in the Home network . |
+| `FOREIGN_BRIDGE_ADDRESS` | Address of the bridge in the Foreign network to send transactions. |
+| `FOREIGN_MIN_AMOUNT_PER_TX` | Value (in _eth_ or tokens) to be sent in one transaction for the Foreign network. This should be greater than or equal to the value specified in the `poa-bridge-contracts/deploy/.env` file. The default value in that file is 500000000000000000, which is equivalent to 0.5. |
+| `FOREIGN_TEST_TX_GAS_PRICE` | The gas price (in Wei) that is used to send transactions in the Foreign network . |
+
+## Contributing
+
+See the [CONTRIBUTING](CONTRIBUTING.md) document for contribution, testing and pull request protocol.
+
 ## License
 
-Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
+[![License: LGPL v3.0](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
-<!---
-Note - According to contest rules all source code must be made in pursuant to the terms of the Apache license. 
-You can copy and include LICENSE-APACHE from threshold-crypto crate. Not sure about MIT license, lets confirm.
---->
+This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
+## References
+
+* [Additional Documentation](https://forum.poa.network/c/tokenbridge)
+* [POA Bridge FAQ](https://poanet.zendesk.com/hc/en-us/categories/360000349273-POA-Bridge)
+

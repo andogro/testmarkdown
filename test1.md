@@ -1,4 +1,4 @@
-##Verifying a smart contract in blockscout
+## Verifying a smart contract in blockscout
 
 Once verified, a smart contract or token contract's source code becomes publically available and verifiable. This creates transparency and trust. Plus, it's easy to do!
 

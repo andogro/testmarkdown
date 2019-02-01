@@ -1,10 +1,10 @@
-Verifying a smart contract in blockscout
+##Verifying a smart contract in blockscout
 
 Once verified, a smart contract or token contract's source code becomes publically available and verifiable. This creates transparency and trust. Plus, it's easy to do!
 
-1. Go to blockscout.com, verify you are on the correct chain, and type the contract's address into the search bar. Your contract should come up.
+1. Go to [blockscout.com](https://blockscout.com/), verify you are on the correct chain, and type the contract's address into the search bar. Your contract should come up.
 
-2. Select the 'Code' tab below the contract to view the bytecode.
+2. Select the `Code` tab below the contract to view the bytecode.
 
 <img 1>
 

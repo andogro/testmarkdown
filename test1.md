@@ -1,4 +1,4 @@
-The following variables are configured in the `.env` file when deploying an ERC20-to-ERC20 bridge.  
+The following variables are configured in the smart contracts `.env` file (https://github.com/poanetwork/poa-bridge-contracts) when deploying a Native-to-ERC bridge.  
 
 | Variable | Value | Description |
 |----------------------------------------|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
